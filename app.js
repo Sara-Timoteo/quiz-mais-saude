@@ -118,11 +118,8 @@ loginForm.addEventListener('submit', async (e) => {
   const numero = loginForm.numero.value.trim();
   const ano = parseInt(loginForm.ano.value, 10);
 
-  alert('PASSO 1: submit disparou. numero="' + numero + '", ano=' + ano);
-
   if (!numero || !ano) {
     showLoginError('Preencha o número e o ano de nascimento.');
-    alert('PASSO 2: campos vazios, parámos aqui.');
     return;
   }
 
@@ -133,31 +130,22 @@ loginForm.addEventListener('submit', async (e) => {
     return;
   }
 
-  alert('PASSO 3: vou chamar Supabase verificar_beneficiario...');
-
   // Modo real — chama a função verificar_beneficiario no Supabase
   try {
     const { data, error } = await sb.rpc('verificar_beneficiario', {
       p_numero: numero,
       p_ano: ano,
     });
-    alert('PASSO 4: Supabase respondeu. error=' + JSON.stringify(error) + '  data=' + JSON.stringify(data));
-    if (error) {
-      console.error('RPC error:', error);
-      showLoginError('Supabase: ' + (error.message || JSON.stringify(error)) + ' (código: ' + (error.code || '?') + ')');
-      return;
-    }
+    if (error) throw error;
     if (!data || data.length === 0) {
       showLoginError('Número de beneficiário ou ano de nascimento inválidos.');
       return;
     }
-    alert('PASSO 5: credenciais OK, a guardar sessão e navegar.');
     saveSession(data[0]);
     await goToNiveis();
   } catch (err) {
-    console.error('Login exception:', err);
-    alert('PASSO 4-EXCEPÇÃO: ' + (err.message || err));
-    showLoginError('Excepção: ' + (err.message || err));
+    console.error('Login error:', err);
+    showLoginError('Erro ao verificar credenciais. Tente novamente.');
   }
 });
 
