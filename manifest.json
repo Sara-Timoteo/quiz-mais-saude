@@ -1,22 +1,16 @@
 {
-  "name": "Quiz Mais Saúde",
-  "short_name": "Quiz Saúde",
-  "description": "Quiz educativo sobre saúde para beneficiários.",
+  "name": "Quiz Mais Saúde · abem:",
+  "short_name": "Mais Saúde",
+  "description": "Quiz educativo sobre saúde e medicamentos do programa abem: (Rede Solidária do Medicamento, Dignitude).",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#FAF7F2",
-  "theme_color": "#1B4332",
+  "background_color": "#8ACAC9",
+  "theme_color": "#8ACAC9",
   "lang": "pt-PT",
-  "categories": ["education", "health"],
+  "categories": ["education", "health", "medical"],
   "icons": [
-    {
-      "src": "./icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
     {
       "src": "./icon-192.png",
       "sizes": "192x192",
@@ -31,3 +25,4 @@
     }
   ]
 }
+
