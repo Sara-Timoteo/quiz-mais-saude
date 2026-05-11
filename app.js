@@ -1,6 +1,30 @@
-/* ============================================
+* ============================================
    QUIZ MAIS SAÚDE — Lógica da aplicação
    ============================================ */
+
+// ============================================
+// 🐛 Overlay de erros visível (ajuda em debug)
+// ============================================
+// Se algo falhar, em vez de a app ficar "estática", aparece um aviso
+// no topo da página com a mensagem. Podes apagar este bloco quando
+// tudo estiver estável.
+function showFatalError(msg) {
+  let bar = document.getElementById('__err_bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = '__err_bar';
+    bar.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#B91C1C;color:#fff;padding:12px 16px;font:14px/1.4 system-ui,sans-serif;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,0.2);';
+    document.body.appendChild(bar);
+  }
+  bar.textContent = '⚠️  ' + msg;
+  console.error(msg);
+}
+window.addEventListener('error', (e) => {
+  showFatalError('JS error: ' + (e.message || 'desconhecido') + ' — verifica a consola (F12).');
+});
+window.addEventListener('unhandledrejection', (e) => {
+  showFatalError('Async error: ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
+});
 
 // ============================================
 // ⚙️  CONFIGURAÇÃO — EDITA APENAS ESTAS LINHAS
@@ -26,7 +50,12 @@ const FEEDBACK_MS = 1600;
 // Setup Supabase
 // ============================================
 
+if (!window.supabase || !window.supabase.createClient) {
+  showFatalError('A biblioteca Supabase não carregou (verifica ligação à internet ou bloqueios de rede).');
+  throw new Error('Supabase library not loaded');
+}
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+console.log('✓ Supabase client criado:', SUPABASE_URL);
 
 // ============================================
 // Estado da aplicação
@@ -123,6 +152,7 @@ loginForm.addEventListener('submit', async (e) => {
 });
 
 skipLoginBtn.addEventListener('click', async () => {
+  console.log('▶ Skip login clicked — entering test mode');
   saveSession({ numero_beneficiario: 'teste', modo_teste: true });
   await goToNiveis();
 });
@@ -151,16 +181,19 @@ async function loadNiveis() {
   const list = document.getElementById('niveis-list');
   list.innerHTML = '<li class="loading">A carregar níveis…</li>';
 
+  console.log('▶ Querying Supabase:', TABLE_NIVEIS);
   const { data, error } = await sb
     .from(TABLE_NIVEIS)
     .select('id, nome')
     .order('id', { ascending: true });
 
   if (error) {
+    console.error('✗ Supabase error loading niveis:', error);
     list.innerHTML = `<li class="loading">Não foi possível carregar os níveis.<small>${escapeHTML(error.message)}</small></li>`;
     return;
   }
 
+  console.log('✓ Niveis recebidos:', data);
   state.niveis = data || [];
 
   if (state.niveis.length === 0) {
