@@ -2,14 +2,17 @@
    Estratégia: cache-first para assets estáticos, network para Supabase.
 */
 
-const CACHE_NAME = 'quiz-mais-saude-v1';
+const CACHE_NAME = 'quiz-mais-saude-v3';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
   './app.js',
   './manifest.json',
-  './icon.svg',
+  './icon-192.png',
+  './icon-512.png',
+  './assets/abem-logo.png',
+  './assets/dignitude-logo.png',
 ];
 
 self.addEventListener('install', (event) => {
@@ -58,3 +61,4 @@ self.addEventListener('fetch', (event) => {
     )
   );
 });
+
