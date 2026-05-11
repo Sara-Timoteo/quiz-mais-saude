@@ -1,4 +1,4 @@
-* ============================================
+/* ============================================
    QUIZ MAIS SAÚDE — Lógica da aplicação
    ============================================ */
 
@@ -136,7 +136,11 @@ loginForm.addEventListener('submit', async (e) => {
       p_numero: numero,
       p_ano: ano,
     });
-    if (error) throw error;
+    if (error) {
+      console.error('RPC error:', error);
+      showLoginError('Supabase: ' + (error.message || JSON.stringify(error)) + ' (código: ' + (error.code || '?') + ')');
+      return;
+    }
     if (!data || data.length === 0) {
       showLoginError('Número de beneficiário ou ano de nascimento inválidos.');
       return;
@@ -144,8 +148,8 @@ loginForm.addEventListener('submit', async (e) => {
     saveSession(data[0]);
     await goToNiveis();
   } catch (err) {
-    console.error('Login error:', err);
-    showLoginError('Erro ao verificar credenciais. Tente novamente.');
+    console.error('Login exception:', err);
+    showLoginError('Excepção: ' + (err.message || err) + ' — possível problema de rede ou função em falta.');
   }
 });
 
