@@ -111,7 +111,6 @@ function clearSession() {
 
 const loginForm   = document.getElementById('login-form');
 const loginError  = document.getElementById('login-error');
-const skipLoginBtn = document.getElementById('skip-login');
 
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -149,12 +148,6 @@ loginForm.addEventListener('submit', async (e) => {
     console.error('Login error:', err);
     showLoginError('Erro ao verificar credenciais. Tente novamente.');
   }
-});
-
-skipLoginBtn.addEventListener('click', async () => {
-  console.log('▶ Skip login clicked — entering test mode');
-  saveSession({ numero_beneficiario: 'teste', modo_teste: true });
-  await goToNiveis();
 });
 
 function showLoginError(msg) {
