@@ -3,28 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#1B4332">
-  <title>Quiz Mais Saúde</title>
+  <meta name="theme-color" content="#8ACAC9">
+  <title>Quiz Mais Saúde · abem:</title>
   <link rel="manifest" href="./manifest.json">
-  <link rel="icon" type="image/svg+xml" href="./icon.svg">
-  <link rel="apple-touch-icon" href="./icon.svg">
+  <link rel="icon" type="image/png" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Outfit:wght@300;400;500;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sansita+Slab:wght@400;700;800;900&family=Outfit:wght@300;400;500;600&display=swap">
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
   <main id="app">
 
     <!-- ====== LOGIN ====== -->
-    <section class="view" data-view="login">
-      <header class="brand">
-        <span class="brand__mark" aria-hidden="true">+</span>
-        <h1 class="brand__name">Quiz <em>Mais Saúde</em></h1>
+    <section class="view view--login" data-view="login">
+      <header class="login-hero">
+        <div class="abem-logo-frame">
+          <img src="./assets/abem-logo.png" alt="abem: Rede Solidária do Medicamento" class="abem-logo">
+        </div>
+        <h1 class="login-hero__title">Quiz Mais Saúde</h1>
       </header>
-      <form id="login-form" class="card" novalidate>
+
+      <form id="login-form" class="login-card" novalidate>
         <h2>Entrar</h2>
-        <p class="caption">Insira o seu número de beneficiário e ano de nascimento</p>
+        <p class="caption">Use o seu número de beneficiário e ano de nascimento</p>
 
         <label>
           <span>Número de beneficiário</span>
@@ -40,10 +43,15 @@
 
         <button type="submit" class="btn btn--primary">Entrar</button>
       </form>
+
+      <footer class="dignitude-footer">
+        <span class="dignitude-footer__label">programa de</span>
+        <img src="./assets/dignitude-logo.png" alt="Dignitude" class="dignitude-logo">
+      </footer>
     </section>
 
     <!-- ====== NÍVEIS ====== -->
-    <section class="view" data-view="niveis" hidden>
+    <section class="view view--niveis" data-view="niveis" hidden>
       <header class="app-header">
         <h1>Quiz Mais Saúde</h1>
         <button id="logout" class="btn-icon" aria-label="Sair" title="Sair">↩</button>
@@ -56,7 +64,7 @@
     </section>
 
     <!-- ====== QUIZ ====== -->
-    <section class="view" data-view="quiz" hidden>
+    <section class="view view--quiz" data-view="quiz" hidden>
       <header class="app-header">
         <button id="quiz-back" class="btn-icon" aria-label="Voltar" title="Voltar">←</button>
         <h2 id="quiz-level-name"></h2>
@@ -88,3 +96,4 @@
   <script src="./app.js"></script>
 </body>
 </html>
+
