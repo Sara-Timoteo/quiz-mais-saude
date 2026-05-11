@@ -36,7 +36,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // Quando importares os beneficiários e criares a função verificar_beneficiario,
 // muda esta linha para true. Enquanto for false, o login está em modo de teste
 // (aceita qualquer número/ano).
-const REQUIRE_LOGIN = false;
+const REQUIRE_LOGIN = true;
 
 // Nomes das tabelas no Supabase (case-sensitive!).
 // Se as tuas tabelas tiverem outros nomes, ajusta aqui:
