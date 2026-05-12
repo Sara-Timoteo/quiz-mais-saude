@@ -16,8 +16,39 @@
 <body>
   <main id="app">
 
+    <!-- ====== SPLASH ====== -->
+    <section class="view view--splash" data-view="splash">
+      <div class="splash-stack">
+        <img src="./assets/abem-logo.png" alt="abem: Rede Solidária do Medicamento" class="splash-logo splash-logo--abem">
+        <div class="splash-divider"></div>
+        <div class="splash-dignitude-wrap">
+          <span class="splash-program-label">programa de</span>
+          <img src="./assets/dignitude-logo.png" alt="Dignitude" class="splash-logo splash-logo--dignitude">
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== WELCOME ====== -->
+    <section class="view view--welcome" data-view="welcome" hidden>
+      <header class="welcome-hero">
+        <div class="abem-logo-frame">
+          <img src="./assets/abem-logo.png" alt="abem:" class="abem-logo">
+        </div>
+      </header>
+      <div class="welcome-content">
+        <h1>Bem-vindo!</h1>
+        <p>Vamos ajudá-lo a saber mais sobre os seus medicamentos e a tomá-los à hora certa, através de quizzes simples.</p>
+        <p>Ao responder vai ganhando pontos e pode receber recompensas do programa <strong>abem:</strong>.</p>
+        <button id="welcome-start" class="btn btn--primary">Começar</button>
+      </div>
+      <footer class="dignitude-footer">
+        <span class="dignitude-footer__label">programa de</span>
+        <img src="./assets/dignitude-logo.png" alt="Dignitude" class="dignitude-logo">
+      </footer>
+    </section>
+
     <!-- ====== LOGIN ====== -->
-    <section class="view view--login" data-view="login">
+    <section class="view view--login" data-view="login" hidden>
       <header class="login-hero">
         <div class="abem-logo-frame">
           <img src="./assets/abem-logo.png" alt="abem: Rede Solidária do Medicamento" class="abem-logo">
@@ -50,14 +81,59 @@
       </footer>
     </section>
 
+    <!-- ====== DASHBOARD ====== -->
+    <section class="view view--dashboard" data-view="dashboard" hidden>
+      <header class="app-header">
+        <h1>Olá!</h1>
+        <button id="dashboard-perfil" class="btn-icon" aria-label="Perfil" title="Perfil">👤</button>
+      </header>
+
+      <div class="dashboard">
+        <p class="dashboard__greeting">Bom dia, <strong id="dashboard-user">beneficiário</strong>.</p>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-card__label">Quizzes feitos</span>
+            <span class="stat-card__value" id="stat-quizzes">—</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card__label">Pontuação média</span>
+            <span class="stat-card__value" id="stat-media">—</span>
+          </div>
+        </div>
+
+        <button id="dashboard-quiz" class="cta-big">
+          <span class="cta-big__title">Iniciar Quiz</span>
+          <span class="cta-big__sub">Responda e ganhe pontos</span>
+        </button>
+
+        <div class="dashboard-links">
+          <button id="dashboard-historico" class="link-card">
+            <span class="link-card__icon">📊</span>
+            <span class="link-card__text">Histórico</span>
+            <span class="link-card__arrow">→</span>
+          </button>
+          <button id="dashboard-perfil-card" class="link-card">
+            <span class="link-card__icon">👤</span>
+            <span class="link-card__text">Perfil</span>
+            <span class="link-card__arrow">→</span>
+          </button>
+        </div>
+      </div>
+
+      <footer class="dignitude-footer dignitude-footer--inset">
+        <span class="dignitude-footer__label">programa de</span>
+        <img src="./assets/dignitude-logo.png" alt="Dignitude" class="dignitude-logo">
+      </footer>
+    </section>
+
     <!-- ====== NÍVEIS ====== -->
     <section class="view view--niveis" data-view="niveis" hidden>
       <header class="app-header">
-        <h1>Quiz Mais Saúde</h1>
-        <button id="logout" class="btn-icon" aria-label="Sair" title="Sair">↩</button>
+        <button id="niveis-back" class="btn-icon" aria-label="Voltar" title="Voltar">←</button>
+        <h1>Escolha um nível</h1>
       </header>
       <div class="niveis-intro">
-        <h2>Escolha um nível</h2>
         <p class="caption">Toque num nível para começar.</p>
       </div>
       <ul id="niveis-list" class="niveis"></ul>
@@ -78,16 +154,66 @@
       <p id="feedback" class="feedback" role="status" aria-live="polite" hidden></p>
     </section>
 
-    <!-- ====== TERMINAR ====== -->
-    <section class="view view--terminar" data-view="terminar" hidden>
-      <div class="trophy-burst" aria-hidden="true">
-        <div class="trophy">🏆</div>
+    <!-- ====== RESULTADO ====== -->
+    <section class="view view--resultado" data-view="resultado" hidden>
+      <div class="resultado">
+        <div class="trophy-burst" aria-hidden="true">
+          <div class="trophy">🏆</div>
+        </div>
+        <p class="resultado__label">A sua pontuação</p>
+        <p class="resultado__percent" id="resultado-percent">—</p>
+        <p class="resultado__detail" id="resultado-detail">— de — respostas correctas</p>
+        <p class="resultado__msg" id="resultado-msg">Continue assim!</p>
+
+        <button id="resultado-next" class="btn btn--primary">Próximo nível</button>
+        <button id="resultado-home" class="btn btn--ghost">Voltar ao início</button>
       </div>
-      <h1>Parabéns!</h1>
-      <p>Nível concluído</p>
-      <p id="score-text" class="score"></p>
-      <button id="next-level" class="btn btn--primary">Próximo nível</button>
-      <button id="back-to-levels" class="btn btn--ghost">Voltar à lista de níveis</button>
+    </section>
+
+    <!-- ====== HISTÓRICO ====== -->
+    <section class="view view--historico" data-view="historico" hidden>
+      <header class="app-header">
+        <button id="historico-back" class="btn-icon" aria-label="Voltar" title="Voltar">←</button>
+        <h1>Histórico</h1>
+      </header>
+      <div class="historico-intro">
+        <p class="caption">Os seus últimos quizzes.</p>
+      </div>
+      <ul id="historico-list" class="historico"></ul>
+    </section>
+
+    <!-- ====== PERFIL ====== -->
+    <section class="view view--perfil" data-view="perfil" hidden>
+      <header class="app-header">
+        <button id="perfil-back" class="btn-icon" aria-label="Voltar" title="Voltar">←</button>
+        <h1>Perfil</h1>
+      </header>
+
+      <div class="perfil">
+        <div class="perfil-avatar" aria-hidden="true">👤</div>
+
+        <div class="perfil-field">
+          <span class="perfil-field__label">Número de beneficiário</span>
+          <span class="perfil-field__value" id="perfil-numero">—</span>
+        </div>
+
+        <div class="perfil-field">
+          <span class="perfil-field__label">Quizzes feitos</span>
+          <span class="perfil-field__value" id="perfil-total-quizzes">—</span>
+        </div>
+
+        <div class="perfil-field">
+          <span class="perfil-field__label">Pontuação média</span>
+          <span class="perfil-field__value" id="perfil-media">—</span>
+        </div>
+
+        <div class="perfil-field">
+          <span class="perfil-field__label">Idioma</span>
+          <span class="perfil-field__value">Português</span>
+        </div>
+
+        <button id="perfil-logout" class="btn btn--danger">Terminar sessão</button>
+      </div>
     </section>
 
   </main>
@@ -96,4 +222,3 @@
   <script src="./app.js"></script>
 </body>
 </html>
-
