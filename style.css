@@ -2182,3 +2182,99 @@ input:focus {
   background: rgba(138, 202, 201, 0.20);
   color: var(--mint-dark);
 }
+
+/* ============================================
+   FASE 3 — Recompensas no Perfil do utente
+   ============================================ */
+
+.perfil-recompensas {
+  background: var(--surface);
+  border: 1.5px solid var(--mint-pale);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+
+.perfil-recompensas__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--ink);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.perfil-recompensas__title span {
+  background: var(--mint);
+  color: var(--surface);
+  font-family: var(--font-body);
+  font-size: 11px;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+}
+
+.recompensas-lista {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;
+}
+
+.recompensa-item {
+  display: flex;
+  gap: 14px;
+  background: var(--mint-pale);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  align-items: flex-start;
+}
+.recompensa-item__img {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.recompensa-item__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  flex-shrink: 0;
+}
+.recompensa-item__body { flex: 1; min-width: 0; }
+.recompensa-item__titulo {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink);
+}
+.recompensa-item__desc {
+  font-size: 12px;
+  color: var(--ink-muted);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+.recompensa-item__codigo {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 4px 10px;
+  background: var(--surface);
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--warning, #C77A0C);
+  font-weight: 700;
+}
+.recompensa-item__data {
+  font-size: 11px;
+  color: var(--ink-muted);
+  margin-top: 4px;
+}

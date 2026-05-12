@@ -480,6 +480,53 @@ async function goToPerfil() {
   $('perfil-media').textContent = stats.total > 0 ? `${stats.media}%` : '—';
 
   renderPerfilNotif();
+  renderPerfilRecompensas().catch(err => console.warn('Erro a carregar recompensas:', err));
+}
+
+async function renderPerfilRecompensas() {
+  const wrap = $('perfil-recompensas-wrap');
+  const lista = $('perfil-recompensas-lista');
+  const count = $('perfil-recompensas-count');
+
+  const { data, error } = await sb.from('recompensas')
+    .select('*')
+    .eq('numero_beneficiario', userNumber())
+    .order('criado_em', { ascending: false });
+
+  if (error || !data || data.length === 0) {
+    wrap.hidden = true;
+    return;
+  }
+
+  wrap.hidden = false;
+  count.textContent = data.length;
+
+  lista.innerHTML = data.map(r => {
+    const dataStr = new Date(r.criado_em).toLocaleDateString('pt-PT');
+    if (r.tipo === 'imagem' && r.imagem_url) {
+      return `
+        <li class="recompensa-item">
+          <img src="${escapeHTML(r.imagem_url)}" alt="" class="recompensa-item__img">
+          <div class="recompensa-item__body">
+            <div class="recompensa-item__titulo">${escapeHTML(r.titulo)}</div>
+            ${r.descricao ? `<div class="recompensa-item__desc">${escapeHTML(r.descricao)}</div>` : ''}
+            <div class="recompensa-item__data">Atribuída em ${dataStr}</div>
+          </div>
+        </li>
+      `;
+    }
+    return `
+      <li class="recompensa-item">
+        <div class="recompensa-item__icon">🎟️</div>
+        <div class="recompensa-item__body">
+          <div class="recompensa-item__titulo">${escapeHTML(r.titulo)}</div>
+          ${r.descricao ? `<div class="recompensa-item__desc">${escapeHTML(r.descricao)}</div>` : ''}
+          ${r.voucher_codigo ? `<span class="recompensa-item__codigo">${escapeHTML(r.voucher_codigo)}</span>` : ''}
+          <div class="recompensa-item__data">Atribuída em ${dataStr}</div>
+        </div>
+      </li>
+    `;
+  }).join('');
 }
 
 function renderPerfilNotif() {

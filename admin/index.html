@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Admin · abem:</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sansita+Swashed:wght@400;700;800&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ====== LOGIN ====== -->
+  <section class="admin-view view--login" data-view="login">
+    <div class="login-card">
+      <img src="../assets/abem-logo.png" alt="abem:" class="login-logo">
+      <h1>Painel de Administração</h1>
+      <p class="login-sub">Acesso reservado a administradores autorizados.</p>
+
+      <form id="login-form" novalidate>
+        <label>
+          <span>Email</span>
+          <input id="login-email" type="email" required autocomplete="email" autofocus>
+        </label>
+        <label>
+          <span>Password</span>
+          <input id="login-password" type="password" required autocomplete="current-password">
+        </label>
+        <div id="login-error" class="error" hidden></div>
+        <button type="submit" class="btn btn--primary">Entrar</button>
+      </form>
+
+      <p class="login-footer">
+        <a href="../">← Voltar à app de utente</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- ====== APP ADMIN (shell) ====== -->
+  <section class="admin-view view--app" data-view="app" hidden>
+    <header class="admin-header">
+      <div class="admin-header__brand">
+        <img src="../assets/abem-logo.png" alt="abem:" class="admin-header__logo">
+        <span class="admin-header__title">Admin</span>
+      </div>
+      <nav class="admin-nav">
+        <button class="admin-nav__btn admin-nav__btn--active" data-section="dashboard">Dashboard</button>
+        <button class="admin-nav__btn" data-section="utilizadores">Utilizadores</button>
+        <button class="admin-nav__btn" data-section="pontuacoes">Pontuações</button>
+        <button class="admin-nav__btn" data-section="recompensas">Recompensas</button>
+      </nav>
+      <div class="admin-header__user">
+        <span id="admin-nome">…</span>
+        <button id="admin-logout" class="btn-link">Sair</button>
+      </div>
+    </header>
+
+    <main class="admin-main">
+
+      <!-- Dashboard -->
+      <section id="section-dashboard" class="admin-section">
+        <h2>Visão geral</h2>
+        <div class="stats-grid stats-grid--admin">
+          <div class="stat-card">
+            <span class="stat-card__label">Utilizadores</span>
+            <span class="stat-card__value" id="stat-utilizadores">…</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card__label">Quizzes feitos</span>
+            <span class="stat-card__value" id="stat-quizzes">…</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card__label">Recompensas atribuídas</span>
+            <span class="stat-card__value" id="stat-recompensas">…</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card__label">Pontuação média</span>
+            <span class="stat-card__value" id="stat-media">…</span>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <h3>Top 10 pontuações</h3>
+          <div id="top10" class="admin-table-wrap">A carregar…</div>
+        </div>
+
+        <div class="admin-card">
+          <h3>Recompensas recentes</h3>
+          <div id="recompensas-recentes" class="admin-table-wrap">A carregar…</div>
+        </div>
+      </section>
+
+      <!-- Utilizadores -->
+      <section id="section-utilizadores" class="admin-section" hidden>
+        <div class="section-header">
+          <h2>Utilizadores</h2>
+          <button id="utilizador-novo" class="btn btn--primary btn--small">+ Novo utilizador</button>
+        </div>
+        <input id="utilizadores-search" type="search" placeholder="Procurar por número de beneficiário…" class="admin-search">
+        <div id="utilizadores-lista" class="admin-table-wrap">A carregar…</div>
+      </section>
+
+      <!-- Detalhe de utilizador -->
+      <section id="section-utilizador-detalhe" class="admin-section" hidden>
+        <button id="detalhe-voltar" class="btn-link">← Voltar à lista</button>
+        <div id="detalhe-conteudo">A carregar…</div>
+      </section>
+
+      <!-- Pontuações -->
+      <section id="section-pontuacoes" class="admin-section" hidden>
+        <h2>Pontuações</h2>
+        <div class="filtros">
+          <label>
+            <span>Nível</span>
+            <select id="pontuacoes-filtro-nivel">
+              <option value="">Todos</option>
+            </select>
+          </label>
+        </div>
+        <div id="pontuacoes-lista" class="admin-table-wrap">A carregar…</div>
+      </section>
+
+      <!-- Recompensas -->
+      <section id="section-recompensas" class="admin-section" hidden>
+        <h2>Recompensas atribuídas</h2>
+        <div id="recompensas-lista" class="admin-table-wrap">A carregar…</div>
+      </section>
+
+    </main>
+  </section>
+
+  <!-- ====== MODAL: Atribuir recompensa ====== -->
+  <div id="modal-recompensa" class="modal" hidden>
+    <div class="modal__backdrop" data-modal-close></div>
+    <div class="modal__card">
+      <button class="modal__close" data-modal-close aria-label="Fechar">×</button>
+      <h3>Atribuir recompensa</h3>
+      <p class="modal__sub">Beneficiário: <strong id="rec-beneficiario">—</strong></p>
+
+      <form id="recompensa-form" novalidate>
+        <fieldset class="tipo-toggle">
+          <legend>Tipo</legend>
+          <label class="tipo-opt">
+            <input type="radio" name="rec-tipo" value="imagem" checked>
+            <span>🖼️ Imagem</span>
+          </label>
+          <label class="tipo-opt">
+            <input type="radio" name="rec-tipo" value="voucher">
+            <span>🎟️ Voucher</span>
+          </label>
+        </fieldset>
+
+        <label>
+          <span>Título *</span>
+          <input id="rec-titulo" type="text" required placeholder="Ex: Medalha de Ouro · Voucher 5€">
+        </label>
+
+        <div id="rec-imagem-wrap">
+          <label>
+            <span>Imagem *</span>
+            <input id="rec-imagem" type="file" accept="image/*">
+            <small class="hint">JPG, PNG ou GIF · máx. 2 MB</small>
+          </label>
+          <div id="rec-imagem-preview" class="img-preview" hidden></div>
+        </div>
+
+        <div id="rec-voucher-wrap" hidden>
+          <label>
+            <span>Código do voucher *</span>
+            <input id="rec-voucher-codigo" type="text" placeholder="Ex: ABEM-2026-001">
+          </label>
+        </div>
+
+        <label>
+          <span>Descrição (opcional)</span>
+          <textarea id="rec-descricao" rows="2" placeholder="Ex: Voucher para descontos em farmácias parceiras"></textarea>
+        </label>
+
+        <div id="rec-error" class="error" hidden></div>
+
+        <div class="modal__actions">
+          <button type="button" class="btn btn--secondary" data-modal-close>Cancelar</button>
+          <button type="submit" class="btn btn--primary">Atribuir</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ====== MODAL: Novo utilizador ====== -->
+  <div id="modal-utilizador" class="modal" hidden>
+    <div class="modal__backdrop" data-modal-close></div>
+    <div class="modal__card">
+      <button class="modal__close" data-modal-close aria-label="Fechar">×</button>
+      <h3>Novo utilizador</h3>
+
+      <form id="utilizador-form" novalidate>
+        <label>
+          <span>Número de beneficiário *</span>
+          <input id="user-numero" type="text" required placeholder="Ex: AM000123467">
+        </label>
+        <label>
+          <span>Ano de nascimento *</span>
+          <input id="user-ano" type="number" required min="1900" max="2025" placeholder="Ex: 1961">
+        </label>
+        <div id="user-error" class="error" hidden></div>
+        <div class="modal__actions">
+          <button type="button" class="btn btn--secondary" data-modal-close>Cancelar</button>
+          <button type="submit" class="btn btn--primary">Criar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
