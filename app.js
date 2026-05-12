@@ -608,10 +608,14 @@ const Store = {
   },
 
   async getHistoricoHoje() {
+    return this.getHistoricoData(todayISO());
+  },
+
+  async getHistoricoData(dataISO) {
     try {
       const raw = localStorage.getItem(storeKey('historico'));
       const all = raw ? JSON.parse(raw) : [];
-      return all.filter(h => h.data === todayISO());
+      return all.filter(h => h.data === dataISO);
     } catch { return []; }
   },
 
@@ -627,9 +631,9 @@ const Store = {
     catch (e) { console.warn('Falha a guardar histórico local:', e); }
   },
 
-  async marcarTomado(agendamentoId, tomado) {
+  async marcarTomado(agendamentoId, tomado, dataISO = null) {
     const all = await this._readAllHistorico();
-    const data = todayISO();
+    const data = dataISO || todayISO();
     const idx = all.findIndex(h => h.agendamento_id === agendamentoId && h.data === data);
     const row = {
       agendamento_id: agendamentoId,
@@ -980,6 +984,166 @@ async function renderMedicamentos() {
 
 $('medicamentos-back').addEventListener('click', () => goToDashboard());
 $('medicamentos-add').addEventListener('click', () => goToMedForm('new'));
+$('medicamentos-calendario').addEventListener('click', () => goToCalendario());
+
+// ============================================
+// CALENDÁRIO de medicação (marcação retroactiva)
+// ============================================
+
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+let _calMonth = new Date();    // 1º dia do mês a mostrar
+let _calSelected = null;       // dataISO seleccionada (string YYYY-MM-DD)
+
+function startOfMonth(d) {
+  return new Date(d.getFullYear(), d.getMonth(), 1);
+}
+function pad2(n) { return String(n).padStart(2, '0'); }
+function isoFromDate(d) {
+  return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+}
+function dateFromISO(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+
+async function goToCalendario() {
+  _calMonth = startOfMonth(new Date());
+  _calSelected = todayISO();
+  showView('calendario');
+  await renderCalendario();
+  await renderCalendarioDia();
+}
+
+$('calendario-back').addEventListener('click', () => goToMedicamentos());
+$('cal-prev').addEventListener('click', async () => {
+  _calMonth = new Date(_calMonth.getFullYear(), _calMonth.getMonth() - 1, 1);
+  await renderCalendario();
+});
+$('cal-next').addEventListener('click', async () => {
+  _calMonth = new Date(_calMonth.getFullYear(), _calMonth.getMonth() + 1, 1);
+  await renderCalendario();
+});
+
+async function renderCalendario() {
+  const year = _calMonth.getFullYear();
+  const month = _calMonth.getMonth();
+  $('cal-month-label').textContent = `${MESES[month]} ${year}`;
+
+  const firstDay = new Date(year, month, 1);
+  const firstWeekday = firstDay.getDay(); // 0=Dom
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const todayIso = todayISO();
+
+  // Pré-carregar agendamentos e historico do mês
+  const [agendamentos, allHist] = await Promise.all([
+    fetchAgendamentos(),
+    Store._readAllHistorico(),
+  ]);
+
+  let html = '';
+  for (let i = 0; i < firstWeekday; i++) {
+    html += `<button class="cal-cell cal-cell--empty" disabled aria-hidden="true"></button>`;
+  }
+  for (let day = 1; day <= lastDay; day++) {
+    const dataISO = `${year}-${pad2(month+1)}-${pad2(day)}`;
+    const isToday = dataISO === todayIso;
+    const isSelected = dataISO === _calSelected;
+    const isFuture = dataISO > todayIso;
+
+    // Calcular se há tomas agendadas e se todas foram marcadas
+    const dow = dateFromISO(dataISO).getDay();
+    const doses = agendamentos.filter(a => Array.isArray(a.dias_semana) && a.dias_semana.includes(dow));
+    const hasDoses = doses.length > 0;
+    let allTaken = false;
+    if (hasDoses) {
+      const histDay = allHist.filter(h => h.data === dataISO && h.tomado);
+      const idsTomados = new Set(histDay.map(h => h.agendamento_id));
+      allTaken = doses.every(d => idsTomados.has(d.id));
+    }
+
+    const classes = [
+      'cal-cell',
+      isToday && 'cal-cell--today',
+      isSelected && 'cal-cell--selected',
+      isFuture && 'cal-cell--future',
+      hasDoses && 'cal-cell--with-doses',
+      allTaken && 'cal-cell--all-taken',
+    ].filter(Boolean).join(' ');
+
+    html += `<button class="${classes}" data-date="${dataISO}" ${isFuture ? 'disabled' : ''}>${day}</button>`;
+  }
+
+  $('cal-grid').innerHTML = html;
+
+  $('cal-grid').querySelectorAll('.cal-cell:not(.cal-cell--empty):not([disabled])').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      _calSelected = btn.dataset.date;
+      await renderCalendario();
+      await renderCalendarioDia();
+    });
+  });
+}
+
+async function renderCalendarioDia() {
+  const titulo = $('cal-dia-titulo');
+  const lista = $('cal-dia-tomas');
+
+  if (!_calSelected) {
+    titulo.textContent = 'Selecione um dia';
+    lista.innerHTML = '';
+    return;
+  }
+
+  const dataObj = dateFromISO(_calSelected);
+  const diaSemana = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'][dataObj.getDay()];
+  titulo.textContent = `${dataObj.getDate()} de ${MESES[dataObj.getMonth()]} · ${diaSemana}`;
+
+  const [agendamentos, hist] = await Promise.all([
+    fetchAgendamentos(),
+    Store.getHistoricoData(_calSelected),
+  ]);
+
+  const dow = dataObj.getDay();
+  const doses = agendamentos
+    .filter(a => Array.isArray(a.dias_semana) && a.dias_semana.includes(dow))
+    .sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
+
+  if (doses.length === 0) {
+    lista.innerHTML = '<li class="hoje-empty">Sem tomas agendadas para este dia.</li>';
+    return;
+  }
+
+  lista.innerHTML = doses.map(a => {
+    const h = hist.find(x => x.agendamento_id === a.id);
+    const tomado = !!(h && h.tomado);
+    const dose = a.dose ? ` · ${escapeHTML(a.dose)}` : '';
+    return `
+      <li class="hoje-item ${tomado ? 'hoje-item--tomado' : ''}" data-id="${escapeHTML(a.id)}" data-tomado="${tomado}">
+        <span class="hoje-check" aria-hidden="true"></span>
+        <span class="hoje-item__hora">${timeShort(a.hora)}</span>
+        <span class="hoje-item__info">
+          <span class="hoje-item__nome">${escapeHTML(a.medicamento)}</span>
+          ${dose ? `<span class="hoje-item__detalhe">${dose.replace(/^ · /, '')}</span>` : ''}
+        </span>
+      </li>
+    `;
+  }).join('');
+
+  lista.querySelectorAll('.hoje-item').forEach(item => {
+    item.addEventListener('click', async () => {
+      const id = item.dataset.id;
+      const era = item.dataset.tomado === 'true';
+      const novo = !era;
+      item.classList.toggle('hoje-item--tomado', novo);
+      item.dataset.tomado = novo;
+      await Store.marcarTomado(id, novo, _calSelected);
+      invalidateMedCaches();
+      // Re-render do calendário para actualizar pontos
+      await renderCalendario();
+    });
+  });
+}
 
 // ---------- Formulário de Medicamento (novo + editar) ----------
 
@@ -1381,9 +1545,41 @@ $('medicao-form-back').addEventListener('click', () => goToMedicoes(_currentMedi
 // EXPORTAR — CSV e PDF (via window.print() para PDF)
 // ============================================
 
-function goToExportar() { showView('exportar'); }
+function goToExportar() {
+  // Defaults: últimos 30 dias até hoje
+  const hoje = new Date();
+  const ate = isoFromDate(hoje);
+  hoje.setDate(hoje.getDate() - 30);
+  const de = isoFromDate(hoje);
+  $('exportar-de').value = de;
+  $('exportar-ate').value = ate;
+  showView('exportar');
+}
 $('perfil-exportar').addEventListener('click', goToExportar);
 $('exportar-back').addEventListener('click', () => goToPerfil());
+
+// Chips de período rápido
+document.querySelectorAll('.chip[data-preset]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const preset = chip.dataset.preset;
+    const hoje = new Date();
+    $('exportar-ate').value = isoFromDate(hoje);
+    if (preset === 'all') {
+      $('exportar-de').value = '2000-01-01';
+    } else {
+      const inicio = new Date(hoje);
+      inicio.setDate(hoje.getDate() - parseInt(preset, 10));
+      $('exportar-de').value = isoFromDate(inicio);
+    }
+  });
+});
+
+function periodoSeleccionado() {
+  const de = $('exportar-de').value || '2000-01-01';
+  const ate = $('exportar-ate').value || isoFromDate(new Date());
+  // Garantir ordem
+  return de <= ate ? { de, ate } : { de: ate, ate: de };
+}
 
 // Liga botões CSV / PDF aos handlers
 document.querySelectorAll('[data-export]').forEach(btn => {
@@ -1404,47 +1600,65 @@ document.querySelectorAll('[data-export]').forEach(btn => {
   });
 });
 
-// ---------- Geração de dados ----------
+// ---------- Geração de dados (filtrados por período) ----------
 
-async function dadosTensao() {
+function dentroPeriodo(dataISO, periodo) {
+  return dataISO >= periodo.de && dataISO <= periodo.ate;
+}
+
+async function dadosTensao(periodo) {
   const lista = await Store.getMedicoes('tensao');
-  return lista.map(m => ({
-    data: m.data_hora ? new Date(m.data_hora).toLocaleDateString('pt-PT') : '',
-    hora: m.data_hora ? new Date(m.data_hora).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) : '',
-    sistolica: m.sistolica,
-    diastolica: m.diastolica,
-    pulso: m.pulso || '',
-    notas: m.notas || '',
-  }));
+  return lista
+    .filter(m => {
+      if (!m.data_hora) return false;
+      const d = isoFromDate(new Date(m.data_hora));
+      return dentroPeriodo(d, periodo);
+    })
+    .map(m => ({
+      data: new Date(m.data_hora).toLocaleDateString('pt-PT'),
+      hora: new Date(m.data_hora).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
+      sistolica: m.sistolica,
+      diastolica: m.diastolica,
+      pulso: m.pulso || '',
+      notas: m.notas || '',
+    }));
 }
 
-async function dadosGlicemia() {
+async function dadosGlicemia(periodo) {
   const lista = await Store.getMedicoes('glicemia');
-  return lista.map(m => ({
-    data: m.data_hora ? new Date(m.data_hora).toLocaleDateString('pt-PT') : '',
-    hora: m.data_hora ? new Date(m.data_hora).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) : '',
-    valor: m.valor,
-    contexto: m.contexto ? (CONTEXTO_LABELS[m.contexto] || m.contexto) : '',
-    notas: m.notas || '',
-  }));
+  return lista
+    .filter(m => {
+      if (!m.data_hora) return false;
+      const d = isoFromDate(new Date(m.data_hora));
+      return dentroPeriodo(d, periodo);
+    })
+    .map(m => ({
+      data: new Date(m.data_hora).toLocaleDateString('pt-PT'),
+      hora: new Date(m.data_hora).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
+      valor: m.valor,
+      contexto: m.contexto ? (CONTEXTO_LABELS[m.contexto] || m.contexto) : '',
+      notas: m.notas || '',
+    }));
 }
 
-// Adesão à medicação: para os últimos 30 dias, listar todas as tomas esperadas
-// com indicação de "Tomado" ou "Por marcar"
-async function dadosAdesao(diasAtras = 30) {
+// Adesão à medicação: para cada dia do período, listar tomas esperadas com estado
+async function dadosAdesao(periodo) {
   const [agendamentos, hist] = await Promise.all([
     Store.getAgendamentos(),
     Store._readAllHistorico(),
   ]);
   const linhas = [];
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
+  const ini = dateFromISO(periodo.de);
+  const fim = dateFromISO(periodo.ate);
+  // Limitar a 365 dias por segurança
+  const diasTotal = Math.min(366, Math.floor((fim - ini) / 86400000) + 1);
 
-  for (let i = 0; i < diasAtras; i++) {
-    const d = new Date(hoje);
-    d.setDate(hoje.getDate() - i);
+  for (let i = 0; i < diasTotal; i++) {
+    const d = new Date(ini);
+    d.setDate(ini.getDate() + i);
+    if (d > fim) break;
     const dow = d.getDay();
-    const dataISO = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const dataISO = isoFromDate(d);
     const dataLocal = d.toLocaleDateString('pt-PT');
 
     for (const ag of agendamentos) {
@@ -1505,21 +1719,22 @@ function triggerDownload(content, filename, mime) {
 
 async function exportarCSV(tipo) {
   const num = userNumber() || 'utente';
+  const periodo = periodoSeleccionado();
   const dataStr = new Date().toISOString().slice(0, 10);
   let headers, rows, filename;
 
   if (tipo === 'tensao') {
-    const dados = await dadosTensao();
+    const dados = await dadosTensao(periodo);
     headers = ['Data', 'Hora', 'Sistolica (mmHg)', 'Diastolica (mmHg)', 'Pulso (bpm)', 'Notas'];
     rows = dados.map(d => [d.data, d.hora, d.sistolica, d.diastolica, d.pulso, d.notas]);
     filename = `tensao-${num}-${dataStr}.csv`;
   } else if (tipo === 'glicemia') {
-    const dados = await dadosGlicemia();
+    const dados = await dadosGlicemia(periodo);
     headers = ['Data', 'Hora', 'Valor (mg/dL)', 'Contexto', 'Notas'];
     rows = dados.map(d => [d.data, d.hora, d.valor, d.contexto, d.notas]);
     filename = `glicemia-${num}-${dataStr}.csv`;
   } else if (tipo === 'medicacao') {
-    const dados = await dadosAdesao(30);
+    const dados = await dadosAdesao(periodo);
     headers = ['Data', 'Hora prevista', 'Medicamento', 'Dose', 'Estado', 'Hora real'];
     rows = dados.map(d => [d.data, d.hora_prevista, d.medicamento, d.dose, d.tomado ? 'Tomado' : 'Por marcar', d.hora_real]);
     filename = `adesao-${num}-${dataStr}.csv`;
@@ -1541,15 +1756,18 @@ async function exportarPDF(tipo) {
 
 async function renderRelatorio(tipo) {
   const num = userNumber() || '—';
+  const periodo = periodoSeleccionado();
   $('relatorio-numero').textContent = num;
-  $('relatorio-data').textContent = new Date().toLocaleString('pt-PT');
+  const deLabel = dateFromISO(periodo.de).toLocaleDateString('pt-PT');
+  const ateLabel = dateFromISO(periodo.ate).toLocaleDateString('pt-PT');
+  $('relatorio-data').textContent = `${new Date().toLocaleString('pt-PT')} · Período: ${deLabel} a ${ateLabel}`;
 
   let titulo, html;
   if (tipo === 'tensao') {
     titulo = 'Tensão arterial';
-    const dados = await dadosTensao();
+    const dados = await dadosTensao(periodo);
     html = dados.length === 0
-      ? '<div class="relatorio-empty">Sem medições de tensão registadas.</div>'
+      ? '<div class="relatorio-empty">Sem medições de tensão no período seleccionado.</div>'
       : `<table class="relatorio-table">
           <thead><tr>
             <th>Data</th><th>Hora</th><th>Sist.</th><th>Diast.</th><th>Pulso</th><th>Notas</th>
@@ -1567,9 +1785,9 @@ async function renderRelatorio(tipo) {
         </table>`;
   } else if (tipo === 'glicemia') {
     titulo = 'Glicemia';
-    const dados = await dadosGlicemia();
+    const dados = await dadosGlicemia(periodo);
     html = dados.length === 0
-      ? '<div class="relatorio-empty">Sem medições de glicemia registadas.</div>'
+      ? '<div class="relatorio-empty">Sem medições de glicemia no período seleccionado.</div>'
       : `<table class="relatorio-table">
           <thead><tr>
             <th>Data</th><th>Hora</th><th>Valor</th><th>Contexto</th><th>Notas</th>
@@ -1585,12 +1803,11 @@ async function renderRelatorio(tipo) {
           </tbody>
         </table>`;
   } else if (tipo === 'medicacao') {
-    titulo = 'Adesão à medicação (últimos 30 dias)';
-    const dados = await dadosAdesao(30);
+    titulo = 'Adesão à medicação';
+    const dados = await dadosAdesao(periodo);
     if (dados.length === 0) {
-      html = '<div class="relatorio-empty">Sem agendamentos de medicação. Adicione na app primeiro.</div>';
+      html = '<div class="relatorio-empty">Sem agendamentos de medicação no período. Verifique se já adicionou medicamentos.</div>';
     } else {
-      // Resumo simples antes da tabela
       const total = dados.length;
       const tomados = dados.filter(d => d.tomado).length;
       const taxa = total > 0 ? Math.round((tomados / total) * 100) : 0;

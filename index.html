@@ -258,6 +258,7 @@
       <header class="app-header">
         <button id="medicamentos-back" class="btn-icon" aria-label="Voltar" title="Voltar">←</button>
         <h1>Medicamentos</h1>
+        <button id="medicamentos-calendario" class="btn-icon" aria-label="Calendário" title="Calendário">📅</button>
         <button id="medicamentos-add" class="btn-icon" aria-label="Adicionar" title="Adicionar">+</button>
       </header>
 
@@ -272,6 +273,38 @@
         <h2 class="med-section__title">Agendamentos</h2>
         <ul id="agendamentos-list" class="agendamentos-list"></ul>
       </section>
+    </section>
+
+    <!-- ====== CALENDÁRIO DE MEDICAÇÃO ====== -->
+    <section class="view view--calendario" data-view="calendario" hidden>
+      <header class="app-header">
+        <button id="calendario-back" class="btn-icon" aria-label="Voltar" title="Voltar">←</button>
+        <h1>Calendário</h1>
+      </header>
+
+      <div class="calendario">
+        <div class="calendario-nav">
+          <button id="cal-prev" class="btn-icon" aria-label="Mês anterior">←</button>
+          <h2 id="cal-month-label">—</h2>
+          <button id="cal-next" class="btn-icon" aria-label="Mês seguinte">→</button>
+        </div>
+
+        <div class="calendario-weekdays" aria-hidden="true">
+          <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+        </div>
+
+        <div id="cal-grid" class="calendario-grid"></div>
+
+        <div class="calendario-legenda">
+          <span><span class="dot dot--some"></span> Tomas agendadas</span>
+          <span><span class="dot dot--all"></span> Todas marcadas</span>
+        </div>
+
+        <div class="calendario-dia">
+          <h3 id="cal-dia-titulo">Selecione um dia</h3>
+          <ul id="cal-dia-tomas" class="hoje-list"></ul>
+        </div>
+      </div>
     </section>
 
     <!-- ====== FORMULÁRIO MEDICAMENTO (adicionar/editar) ====== -->
@@ -421,6 +454,26 @@
       <div class="exportar">
         <p class="exportar__intro">Exporte os seus dados para partilhar com o seu médico ou guardar uma cópia.</p>
 
+        <section class="exportar-periodo">
+          <h2 class="exportar-group__title">Período</h2>
+          <div class="periodo-row">
+            <label>
+              <span>De</span>
+              <input type="date" id="exportar-de">
+            </label>
+            <label>
+              <span>Até</span>
+              <input type="date" id="exportar-ate">
+            </label>
+          </div>
+          <div class="periodo-chips">
+            <button class="chip" data-preset="7">Últimos 7 dias</button>
+            <button class="chip" data-preset="30">30 dias</button>
+            <button class="chip" data-preset="90">90 dias</button>
+            <button class="chip" data-preset="all">Tudo</button>
+          </div>
+        </section>
+
         <section class="exportar-group">
           <h2 class="exportar-group__title">Tensão arterial</h2>
           <div class="exportar-actions">
@@ -438,7 +491,7 @@
         </section>
 
         <section class="exportar-group">
-          <h2 class="exportar-group__title">Adesão à medicação <small>(últimos 30 dias)</small></h2>
+          <h2 class="exportar-group__title">Adesão à medicação</h2>
           <div class="exportar-actions">
             <button class="btn btn--secondary" data-export="medicacao" data-format="csv">CSV</button>
             <button class="btn btn--secondary" data-export="medicacao" data-format="pdf">PDF</button>
