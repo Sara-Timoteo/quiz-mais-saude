@@ -1070,3 +1070,623 @@ input:focus {
   margin-top: 20px;
 }
 .btn--danger:hover { background: #B82E3D; }
+
+/* ---------- Toggle de notificações no Perfil ---------- */
+
+.perfil-notif {
+  background: var(--surface);
+  border: 1.5px solid var(--mint-pale);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+}
+.perfil-notif__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.perfil-notif__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+.perfil-notif__status {
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+.perfil-notif__status--on { color: var(--mint-dark); font-weight: 600; }
+.perfil-notif__status--off { color: var(--ink-muted); }
+.perfil-notif__status--denied { color: var(--cherry); }
+
+.perfil-notif__btn {
+  background: var(--mint);
+  color: var(--surface);
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  transition: background 0.2s, transform 0.15s;
+  min-height: 36px;
+  white-space: nowrap;
+}
+.perfil-notif__btn:hover { background: var(--mint-dark); transform: translateY(-1px); }
+.perfil-notif__btn--off { background: var(--ink-muted); }
+.perfil-notif__btn--off:hover { background: var(--ink); }
+
+.perfil-notif__hint {
+  font-size: 11px;
+  color: var(--ink-muted);
+  line-height: 1.45;
+  margin-top: 8px;
+}
+
+/* ============================================
+   FASE 2b — MEDICAMENTOS
+   ============================================ */
+
+/* ---------- Card "Próxima toma" no dashboard ---------- */
+
+.proxima-toma-card {
+  background: linear-gradient(135deg, var(--mint) 0%, var(--mint-dark) 100%);
+  color: var(--surface);
+  padding: 20px 22px;
+  border-radius: var(--radius);
+  margin-bottom: 18px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(138, 202, 201, 0.40);
+}
+.proxima-toma-card::before {
+  content: '';
+  position: absolute;
+  top: 0; right: -40px;
+  width: 140px; height: 100%;
+  background: rgba(255, 255, 255, 0.10);
+  transform: skewX(var(--skew));
+  pointer-events: none;
+}
+.proxima-toma-card__label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  font-weight: 500;
+  opacity: 0.90;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
+}
+.proxima-toma-card__med {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 14px;
+  position: relative;
+  z-index: 1;
+}
+.proxima-toma-card__hora {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 28px;
+  letter-spacing: -0.01em;
+}
+.proxima-toma-card__nome {
+  font-size: 16px;
+  font-weight: 500;
+  flex: 1;
+}
+.proxima-toma-card__btn {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--mint-dark);
+  border: none;
+  padding: 10px 18px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  position: relative;
+  z-index: 1;
+  transition: background 0.2s, transform 0.15s;
+}
+.proxima-toma-card__btn:hover {
+  background: var(--surface);
+  transform: translateY(-1px);
+}
+
+/* CTA alternativa (Os meus medicamentos) — variante mais subtil */
+.cta-big--alt {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1.5px solid var(--mint-light);
+  box-shadow: none;
+}
+.cta-big--alt:hover {
+  background: var(--mint-pale);
+  border-color: var(--mint);
+  box-shadow: 0 6px 20px rgba(138, 202, 201, 0.20);
+}
+.cta-big--alt .cta-big__title { color: var(--mint-dark); }
+.cta-big--alt .cta-big__sub  { color: var(--ink-muted); }
+.cta-big--alt::after { color: var(--mint-dark); }
+
+/* ---------- Página Medicamentos ---------- */
+
+.view--medicamentos { padding-bottom: 80px; }
+
+.med-section {
+  padding: 0 20px;
+  margin-top: 22px;
+}
+.med-section__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--ink);
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
+
+.hoje-list,
+.agendamentos-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Hoje: itens com checkbox grande */
+.hoje-item {
+  background: var(--surface);
+  border: 1.5px solid var(--mint-light);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.hoje-item:hover { background: var(--mint-pale); border-color: var(--mint); }
+.hoje-item--tomado {
+  background: var(--mint-pale);
+  border-color: var(--mint);
+  opacity: 0.7;
+}
+.hoje-item--tomado .hoje-item__nome,
+.hoje-item--tomado .hoje-item__detalhe {
+  text-decoration: line-through;
+  color: var(--ink-muted);
+}
+
+.hoje-check {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  border: 2px solid var(--mint);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  transition: background 0.2s, transform 0.2s;
+}
+.hoje-item--tomado .hoje-check {
+  background: var(--mint-dark);
+  border-color: var(--mint-dark);
+}
+.hoje-check::after {
+  content: '✓';
+  color: var(--surface);
+  font-weight: 700;
+  font-size: 16px;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.2s, transform 0.2s;
+}
+.hoje-item--tomado .hoje-check::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.hoje-item__hora {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--mint-dark);
+  min-width: 60px;
+}
+.hoje-item--tomado .hoje-item__hora { color: var(--ink-muted); }
+
+.hoje-item__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.hoje-item__nome {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.hoje-item__detalhe {
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.hoje-empty,
+.agendamentos-empty {
+  background: transparent;
+  text-align: center;
+  padding: 24px 12px;
+  color: var(--ink-muted);
+  font-size: 14px;
+  list-style: none;
+}
+
+/* Agendamentos: cards com info + acções */
+.agendamento-item {
+  background: var(--surface);
+  border: 1.5px solid var(--mint-pale);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.2s, background 0.2s;
+}
+.agendamento-item:hover {
+  transform: translateX(4px);
+  border-color: var(--mint);
+  background: var(--mint-pale);
+}
+.agendamento-item__hora {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 20px;
+  color: var(--mint-dark);
+  min-width: 70px;
+}
+.agendamento-item__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.agendamento-item__nome {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.agendamento-item__detalhe {
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+.agendamento-item__arrow {
+  color: var(--mint-dark);
+  font-size: 18px;
+}
+
+/* ---------- Formulário medicamento ---------- */
+
+.med-form {
+  padding: 24px 20px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.med-form label {
+  margin-bottom: 16px;
+}
+.med-form textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.5px solid var(--mint-light);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 16px;
+  background: var(--mint-pale);
+  color: var(--ink);
+  resize: vertical;
+  min-height: 60px;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+.med-form textarea:focus {
+  outline: none;
+  border-color: var(--mint);
+  background: var(--surface);
+  box-shadow: 0 0 0 4px rgba(138, 202, 201, 0.20);
+}
+
+.med-form-fieldset {
+  border: none;
+  margin-bottom: 20px;
+  padding: 0;
+}
+.med-form-fieldset legend {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  margin-bottom: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dias-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.dia-check {
+  cursor: pointer;
+  margin: 0 !important;
+  display: block;
+}
+.dia-check input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.dia-check span {
+  display: block;
+  padding: 10px 4px;
+  background: var(--mint-pale);
+  border: 1.5px solid var(--mint-light);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  transition: all 0.15s;
+  font-family: var(--font-body);
+}
+.dia-check input:checked + span {
+  background: var(--mint);
+  border-color: var(--mint);
+  color: var(--surface);
+  font-weight: 600;
+}
+.dia-check input:focus-visible + span {
+  outline: 3px solid var(--mint-light);
+  outline-offset: 2px;
+}
+
+.med-form .btn {
+  margin-top: 14px;
+}
+
+/* Pequena legenda de dias usada na lista de agendamentos */
+.dias-resumo {
+  display: inline-flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.dia-pill {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 6px;
+  background: var(--mint-pale);
+  color: var(--mint-dark);
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* ============================================
+   MEDIÇÕES — tensão arterial e glicemia
+   ============================================ */
+
+.view--medicoes { padding-bottom: 80px; }
+
+.segmented {
+  display: flex;
+  gap: 6px;
+  padding: 18px 20px 0;
+}
+.segmented__btn {
+  flex: 1;
+  padding: 12px 14px;
+  background: var(--mint-pale);
+  border: 1.5px solid var(--mint-light);
+  border-radius: var(--radius-pill);
+  color: var(--ink-muted);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.segmented__btn:hover { color: var(--ink); border-color: var(--mint); }
+.segmented__btn--active {
+  background: var(--mint);
+  color: var(--surface);
+  border-color: var(--mint);
+}
+
+.medicoes-content { padding: 20px; }
+
+/* Card "Última medição" */
+.medicao-ultima {
+  background: linear-gradient(135deg, var(--mint) 0%, var(--mint-dark) 100%);
+  color: var(--surface);
+  padding: 22px 22px 24px;
+  border-radius: var(--radius);
+  margin-bottom: 22px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(138, 202, 201, 0.40);
+}
+.medicao-ultima::before {
+  content: '';
+  position: absolute;
+  top: 0; right: -40px;
+  width: 140px; height: 100%;
+  background: rgba(255, 255, 255, 0.10);
+  transform: skewX(var(--skew));
+  pointer-events: none;
+}
+.medicao-ultima__label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  font-weight: 500;
+  opacity: 0.90;
+  margin-bottom: 6px;
+  position: relative; z-index: 1;
+}
+.medicao-ultima__valor {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 42px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+  position: relative; z-index: 1;
+}
+.medicao-ultima__valor small {
+  font-size: 16px;
+  opacity: 0.85;
+  font-weight: 500;
+  margin-left: 6px;
+  letter-spacing: 0;
+}
+.medicao-ultima__sub {
+  font-size: 13px;
+  opacity: 0.92;
+  position: relative; z-index: 1;
+}
+.medicao-ultima--vazia {
+  background: var(--surface);
+  border: 1.5px dashed var(--mint-light);
+  color: var(--ink-muted);
+  box-shadow: none;
+  text-align: center;
+  padding: 28px 20px;
+}
+.medicao-ultima--vazia::before { display: none; }
+
+/* Secção de histórico */
+.medicao-historico__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+
+.medicao-lista {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.medicao-item {
+  background: var(--surface);
+  border: 1.5px solid var(--mint-pale);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.2s, background 0.2s;
+}
+.medicao-item:hover {
+  transform: translateX(4px);
+  border-color: var(--mint);
+  background: var(--mint-pale);
+}
+.medicao-item__valor {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--mint-dark);
+  min-width: 90px;
+}
+.medicao-item__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+.medicao-item__quando {
+  color: var(--ink);
+  font-size: 13px;
+}
+.medicao-item__contexto {
+  font-style: italic;
+}
+
+/* Form de medição */
+.medicao-row-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.medicao-half { margin-bottom: 16px; }
+.medicao-half input { margin-top: 0; }
+.medicao-unit {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--ink-muted);
+  margin-top: 4px;
+  letter-spacing: 0.04em;
+}
+
+.med-form select {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.5px solid var(--mint-light);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 16px;
+  background: var(--mint-pale);
+  color: var(--ink);
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='%236BA8A7' d='M6 8L0 0h12z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
+}
+.med-form select:focus {
+  outline: none;
+  border-color: var(--mint);
+  background-color: var(--surface);
+  box-shadow: 0 0 0 4px rgba(138, 202, 201, 0.20);
+}
+
+.med-form input[type="datetime-local"] {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.5px solid var(--mint-light);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 16px;
+  background: var(--mint-pale);
+  color: var(--ink);
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+.med-form input[type="datetime-local"]:focus {
+  outline: none;
+  border-color: var(--mint);
+  background: var(--surface);
+  box-shadow: 0 0 0 4px rgba(138, 202, 201, 0.20);
+}
+
+.medicoes-empty {
+  background: var(--surface);
+  border: 1.5px dashed var(--mint-light);
+  border-radius: var(--radius-sm);
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--ink-muted);
+  font-size: 14px;
+  list-style: none;
+}

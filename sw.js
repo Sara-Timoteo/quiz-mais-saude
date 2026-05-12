@@ -2,7 +2,7 @@
    Estratégia: cache-first para assets estáticos, network para Supabase.
 */
 
-const CACHE_NAME = 'quiz-mais-saude-v4';
+const CACHE_NAME = 'quiz-mais-saude-v7';
 const ASSETS = [
   './',
   './index.html',
@@ -59,5 +59,29 @@ self.addEventListener('fetch', (event) => {
         return resp;
       }).catch(() => caches.match('./index.html'))
     )
+  );
+});
+
+// ============================================
+// Notificações: clique abre/foca a app
+// ============================================
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetURL = new URL('./', self.registration.scope).href;
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      // Tentar focar uma janela existente da app
+      for (const c of list) {
+        if (c.url.startsWith(self.registration.scope) && 'focus' in c) {
+          return c.focus();
+        }
+      }
+      // Senão, abrir nova
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(targetURL);
+      }
+    })
   );
 });

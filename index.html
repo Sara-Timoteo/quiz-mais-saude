@@ -91,6 +91,16 @@
       <div class="dashboard">
         <p class="dashboard__greeting">Bom dia, <strong id="dashboard-user">beneficiário</strong>.</p>
 
+        <!-- Card Próxima toma (só aparece se houver tomas hoje) -->
+        <div id="proxima-toma-card" class="proxima-toma-card" hidden>
+          <div class="proxima-toma-card__label">Próxima toma</div>
+          <div class="proxima-toma-card__med">
+            <span class="proxima-toma-card__hora" id="proxima-toma-hora">—</span>
+            <span class="proxima-toma-card__nome" id="proxima-toma-nome">—</span>
+          </div>
+          <button id="proxima-toma-marcar" class="proxima-toma-card__btn">Marcar como tomado</button>
+        </div>
+
         <div class="stats-grid">
           <div class="stat-card">
             <span class="stat-card__label">Quizzes feitos</span>
@@ -107,10 +117,20 @@
           <span class="cta-big__sub">Responda e ganhe pontos</span>
         </button>
 
+        <button id="dashboard-medicamentos" class="cta-big cta-big--alt">
+          <span class="cta-big__title">Os meus medicamentos</span>
+          <span class="cta-big__sub" id="dashboard-medicamentos-sub">Agendar e marcar tomas</span>
+        </button>
+
+        <button id="dashboard-medicoes" class="cta-big cta-big--alt">
+          <span class="cta-big__title">As minhas medições</span>
+          <span class="cta-big__sub" id="dashboard-medicoes-sub">Tensão arterial e glicemia</span>
+        </button>
+
         <div class="dashboard-links">
           <button id="dashboard-historico" class="link-card">
             <span class="link-card__icon">📊</span>
-            <span class="link-card__text">Histórico</span>
+            <span class="link-card__text">Histórico de quizzes</span>
             <span class="link-card__arrow">→</span>
           </button>
           <button id="dashboard-perfil-card" class="link-card">
@@ -212,8 +232,177 @@
           <span class="perfil-field__value">Português</span>
         </div>
 
+        <div class="perfil-notif" id="perfil-notif">
+          <div class="perfil-notif__row">
+            <div>
+              <div class="perfil-notif__title">Lembretes de medicação</div>
+              <div class="perfil-notif__status" id="perfil-notif-status">A verificar…</div>
+            </div>
+            <button id="perfil-notif-btn" class="perfil-notif__btn" hidden>Activar</button>
+          </div>
+          <p class="perfil-notif__hint">Os lembretes funcionam enquanto a app estiver aberta ou em segundo plano. Se a fechar completamente, os alertas podem não disparar.</p>
+        </div>
+
         <button id="perfil-logout" class="btn btn--danger">Terminar sessão</button>
       </div>
+    </section>
+
+    <!-- ====== MEDICAMENTOS (lista + hoje) ====== -->
+    <section class="view view--medicamentos" data-view="medicamentos" hidden>
+      <header class="app-header">
+        <button id="medicamentos-back" class="btn-icon" aria-label="Voltar" title="Voltar">←</button>
+        <h1>Medicamentos</h1>
+        <button id="medicamentos-add" class="btn-icon" aria-label="Adicionar" title="Adicionar">+</button>
+      </header>
+
+      <!-- Tomas de hoje -->
+      <section class="med-section">
+        <h2 class="med-section__title">Hoje</h2>
+        <ul id="hoje-list" class="hoje-list"></ul>
+      </section>
+
+      <!-- Lista de agendamentos -->
+      <section class="med-section">
+        <h2 class="med-section__title">Agendamentos</h2>
+        <ul id="agendamentos-list" class="agendamentos-list"></ul>
+      </section>
+    </section>
+
+    <!-- ====== FORMULÁRIO MEDICAMENTO (adicionar/editar) ====== -->
+    <section class="view view--med-form" data-view="med-form" hidden>
+      <header class="app-header">
+        <button id="med-form-back" class="btn-icon" aria-label="Voltar" title="Voltar">←</button>
+        <h1 id="med-form-title">Novo medicamento</h1>
+      </header>
+
+      <form id="med-form" class="med-form" novalidate>
+        <input type="hidden" id="med-form-id" value="">
+
+        <label>
+          <span>Nome do medicamento *</span>
+          <input id="med-form-nome" type="text" required autocomplete="off" placeholder="Ex: Paracetamol">
+        </label>
+
+        <label>
+          <span>Dose</span>
+          <input id="med-form-dose" type="text" autocomplete="off" placeholder="Ex: 1 comprimido, 5 ml">
+        </label>
+
+        <label>
+          <span>Hora *</span>
+          <input id="med-form-hora" type="time" required>
+        </label>
+
+        <fieldset class="med-form-fieldset">
+          <legend>Dias da semana *</legend>
+          <div class="dias-grid" id="med-form-dias">
+            <label class="dia-check"><input type="checkbox" value="1" checked><span>Seg</span></label>
+            <label class="dia-check"><input type="checkbox" value="2" checked><span>Ter</span></label>
+            <label class="dia-check"><input type="checkbox" value="3" checked><span>Qua</span></label>
+            <label class="dia-check"><input type="checkbox" value="4" checked><span>Qui</span></label>
+            <label class="dia-check"><input type="checkbox" value="5" checked><span>Sex</span></label>
+            <label class="dia-check"><input type="checkbox" value="6" checked><span>Sáb</span></label>
+            <label class="dia-check"><input type="checkbox" value="0" checked><span>Dom</span></label>
+          </div>
+        </fieldset>
+
+        <label>
+          <span>Notas</span>
+          <textarea id="med-form-notas" rows="2" placeholder="Ex: depois das refeições"></textarea>
+        </label>
+
+        <div id="med-form-error" class="error" hidden></div>
+
+        <button type="submit" class="btn btn--primary">Guardar</button>
+        <button type="button" id="med-form-delete" class="btn btn--danger" hidden>Apagar agendamento</button>
+      </form>
+    </section>
+
+    <!-- ====== MEDIÇÕES (tensão / glicemia) ====== -->
+    <section class="view view--medicoes" data-view="medicoes" hidden>
+      <header class="app-header">
+        <button id="medicoes-back" class="btn-icon" aria-label="Voltar" title="Voltar">←</button>
+        <h1>Medições</h1>
+        <button id="medicoes-add" class="btn-icon" aria-label="Adicionar" title="Adicionar">+</button>
+      </header>
+
+      <div class="segmented" role="tablist" aria-label="Tipo de medição">
+        <button class="segmented__btn segmented__btn--active" data-tipo="tensao" role="tab" aria-selected="true">Tensão</button>
+        <button class="segmented__btn" data-tipo="glicemia" role="tab" aria-selected="false">Glicemia</button>
+      </div>
+
+      <section class="medicoes-content" id="medicoes-content">
+        <!-- preenchido por JS conforme o tipo seleccionado -->
+      </section>
+    </section>
+
+    <!-- ====== FORMULÁRIO MEDIÇÃO (adicionar/editar) ====== -->
+    <section class="view view--medicao-form" data-view="medicao-form" hidden>
+      <header class="app-header">
+        <button id="medicao-form-back" class="btn-icon" aria-label="Voltar" title="Voltar">←</button>
+        <h1 id="medicao-form-title">Nova medição</h1>
+      </header>
+
+      <form id="medicao-form" class="med-form" novalidate>
+        <input type="hidden" id="medicao-form-id" value="">
+        <input type="hidden" id="medicao-form-tipo" value="tensao">
+
+        <!-- Campos para TENSÃO -->
+        <div class="medicao-fields-tensao" id="medicao-fields-tensao">
+          <div class="medicao-row-pair">
+            <label class="medicao-half">
+              <span>Sistólica (máx.) *</span>
+              <input id="medicao-form-sistolica" type="number" inputmode="numeric" min="60" max="250" autocomplete="off">
+              <small class="medicao-unit">mmHg</small>
+            </label>
+            <label class="medicao-half">
+              <span>Diastólica (mín.) *</span>
+              <input id="medicao-form-diastolica" type="number" inputmode="numeric" min="40" max="150" autocomplete="off">
+              <small class="medicao-unit">mmHg</small>
+            </label>
+          </div>
+          <label>
+            <span>Pulso (opcional)</span>
+            <input id="medicao-form-pulso" type="number" inputmode="numeric" min="30" max="220" autocomplete="off">
+            <small class="medicao-unit">bpm</small>
+          </label>
+        </div>
+
+        <!-- Campos para GLICEMIA -->
+        <div class="medicao-fields-glicemia" id="medicao-fields-glicemia" hidden>
+          <label>
+            <span>Valor *</span>
+            <input id="medicao-form-valor" type="number" inputmode="numeric" min="30" max="600" autocomplete="off">
+            <small class="medicao-unit">mg/dL</small>
+          </label>
+          <label>
+            <span>Contexto</span>
+            <select id="medicao-form-contexto">
+              <option value="">— Sem especificar —</option>
+              <option value="jejum">Em jejum</option>
+              <option value="antes-refeicao">Antes de uma refeição</option>
+              <option value="pos-refeicao">Depois de uma refeição</option>
+              <option value="antes-deitar">Antes de deitar</option>
+              <option value="outro">Outro</option>
+            </select>
+          </label>
+        </div>
+
+        <label>
+          <span>Data e hora</span>
+          <input id="medicao-form-datahora" type="datetime-local">
+        </label>
+
+        <label>
+          <span>Notas</span>
+          <textarea id="medicao-form-notas" rows="2" placeholder="Observações (opcional)"></textarea>
+        </label>
+
+        <div id="medicao-form-error" class="error" hidden></div>
+
+        <button type="submit" class="btn btn--primary">Guardar</button>
+        <button type="button" id="medicao-form-delete" class="btn btn--danger" hidden>Apagar medição</button>
+      </form>
     </section>
 
   </main>
