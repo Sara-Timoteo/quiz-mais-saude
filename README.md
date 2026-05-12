@@ -11,7 +11,6 @@ quiz-mais-saude/
 ├── app.js                  ← lógica + ligação ao Supabase  ⚙️ EDITA AQUI
 ├── manifest.json           ← metadata PWA (nome, ícone, cor)
 ├── sw.js                   ← service worker (funciona offline)
-├── icon.svg                ← ícone vectorial
 ├── icon-192.png            ← ícone 192×192 para Android
 ├── icon-512.png            ← ícone 512×512 para stores
 └── README.md               ← este ficheiro
