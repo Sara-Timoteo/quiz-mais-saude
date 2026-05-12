@@ -1378,6 +1378,253 @@ $('medicao-form-delete').addEventListener('click', async () => {
 $('medicao-form-back').addEventListener('click', () => goToMedicoes(_currentMedicaoTipo));
 
 // ============================================
+// EXPORTAR — CSV e PDF (via window.print() para PDF)
+// ============================================
+
+function goToExportar() { showView('exportar'); }
+$('perfil-exportar').addEventListener('click', goToExportar);
+$('exportar-back').addEventListener('click', () => goToPerfil());
+
+// Liga botões CSV / PDF aos handlers
+document.querySelectorAll('[data-export]').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const tipo = btn.dataset.export;
+    const formato = btn.dataset.format;
+    btn.disabled = true;
+    btn.textContent = 'A preparar…';
+    try {
+      if (formato === 'csv') await exportarCSV(tipo);
+      else if (formato === 'pdf') await exportarPDF(tipo);
+    } catch (err) {
+      alert('Erro a exportar: ' + (err.message || err));
+    } finally {
+      btn.disabled = false;
+      btn.textContent = formato.toUpperCase();
+    }
+  });
+});
+
+// ---------- Geração de dados ----------
+
+async function dadosTensao() {
+  const lista = await Store.getMedicoes('tensao');
+  return lista.map(m => ({
+    data: m.data_hora ? new Date(m.data_hora).toLocaleDateString('pt-PT') : '',
+    hora: m.data_hora ? new Date(m.data_hora).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) : '',
+    sistolica: m.sistolica,
+    diastolica: m.diastolica,
+    pulso: m.pulso || '',
+    notas: m.notas || '',
+  }));
+}
+
+async function dadosGlicemia() {
+  const lista = await Store.getMedicoes('glicemia');
+  return lista.map(m => ({
+    data: m.data_hora ? new Date(m.data_hora).toLocaleDateString('pt-PT') : '',
+    hora: m.data_hora ? new Date(m.data_hora).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) : '',
+    valor: m.valor,
+    contexto: m.contexto ? (CONTEXTO_LABELS[m.contexto] || m.contexto) : '',
+    notas: m.notas || '',
+  }));
+}
+
+// Adesão à medicação: para os últimos 30 dias, listar todas as tomas esperadas
+// com indicação de "Tomado" ou "Por marcar"
+async function dadosAdesao(diasAtras = 30) {
+  const [agendamentos, hist] = await Promise.all([
+    Store.getAgendamentos(),
+    Store._readAllHistorico(),
+  ]);
+  const linhas = [];
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  for (let i = 0; i < diasAtras; i++) {
+    const d = new Date(hoje);
+    d.setDate(hoje.getDate() - i);
+    const dow = d.getDay();
+    const dataISO = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const dataLocal = d.toLocaleDateString('pt-PT');
+
+    for (const ag of agendamentos) {
+      if (!Array.isArray(ag.dias_semana) || !ag.dias_semana.includes(dow)) continue;
+      const h = hist.find(x => x.agendamento_id === ag.id && x.data === dataISO);
+      const tomado = !!(h && h.tomado);
+      const horaReal = (tomado && h.hora_real)
+        ? new Date(h.hora_real).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })
+        : '';
+      linhas.push({
+        data: dataLocal,
+        dataISO,
+        hora_prevista: timeShort(ag.hora),
+        medicamento: ag.medicamento,
+        dose: ag.dose || '',
+        tomado,
+        hora_real: horaReal,
+      });
+    }
+  }
+
+  // Ordenar por data desc, dentro do dia por hora asc
+  linhas.sort((a, b) => {
+    if (a.dataISO !== b.dataISO) return b.dataISO.localeCompare(a.dataISO);
+    return (a.hora_prevista || '').localeCompare(b.hora_prevista || '');
+  });
+
+  return linhas;
+}
+
+// ---------- CSV ----------
+
+function escapeCSV(v) {
+  if (v == null) return '';
+  const s = String(v);
+  if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+
+function rowsToCSV(headers, rows) {
+  const linhas = [headers.map(escapeCSV).join(',')];
+  for (const r of rows) linhas.push(r.map(escapeCSV).join(','));
+  // BOM UTF-8 para o Excel abrir bem com acentos
+  return '\ufeff' + linhas.join('\r\n');
+}
+
+function triggerDownload(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function exportarCSV(tipo) {
+  const num = userNumber() || 'utente';
+  const dataStr = new Date().toISOString().slice(0, 10);
+  let headers, rows, filename;
+
+  if (tipo === 'tensao') {
+    const dados = await dadosTensao();
+    headers = ['Data', 'Hora', 'Sistolica (mmHg)', 'Diastolica (mmHg)', 'Pulso (bpm)', 'Notas'];
+    rows = dados.map(d => [d.data, d.hora, d.sistolica, d.diastolica, d.pulso, d.notas]);
+    filename = `tensao-${num}-${dataStr}.csv`;
+  } else if (tipo === 'glicemia') {
+    const dados = await dadosGlicemia();
+    headers = ['Data', 'Hora', 'Valor (mg/dL)', 'Contexto', 'Notas'];
+    rows = dados.map(d => [d.data, d.hora, d.valor, d.contexto, d.notas]);
+    filename = `glicemia-${num}-${dataStr}.csv`;
+  } else if (tipo === 'medicacao') {
+    const dados = await dadosAdesao(30);
+    headers = ['Data', 'Hora prevista', 'Medicamento', 'Dose', 'Estado', 'Hora real'];
+    rows = dados.map(d => [d.data, d.hora_prevista, d.medicamento, d.dose, d.tomado ? 'Tomado' : 'Por marcar', d.hora_real]);
+    filename = `adesao-${num}-${dataStr}.csv`;
+  } else {
+    throw new Error('Tipo desconhecido: ' + tipo);
+  }
+
+  const csv = rowsToCSV(headers, rows);
+  triggerDownload(csv, filename, 'text/csv;charset=utf-8');
+}
+
+// ---------- PDF (via vista de relatório + window.print()) ----------
+
+async function exportarPDF(tipo) {
+  // Vai para vista de relatório com os dados certos
+  await renderRelatorio(tipo);
+  showView('relatorio');
+}
+
+async function renderRelatorio(tipo) {
+  const num = userNumber() || '—';
+  $('relatorio-numero').textContent = num;
+  $('relatorio-data').textContent = new Date().toLocaleString('pt-PT');
+
+  let titulo, html;
+  if (tipo === 'tensao') {
+    titulo = 'Tensão arterial';
+    const dados = await dadosTensao();
+    html = dados.length === 0
+      ? '<div class="relatorio-empty">Sem medições de tensão registadas.</div>'
+      : `<table class="relatorio-table">
+          <thead><tr>
+            <th>Data</th><th>Hora</th><th>Sist.</th><th>Diast.</th><th>Pulso</th><th>Notas</th>
+          </tr></thead>
+          <tbody>${dados.map(d => `
+            <tr>
+              <td>${escapeHTML(d.data)}</td>
+              <td>${escapeHTML(d.hora)}</td>
+              <td>${d.sistolica} mmHg</td>
+              <td>${d.diastolica} mmHg</td>
+              <td>${d.pulso ? d.pulso + ' bpm' : '—'}</td>
+              <td>${escapeHTML(d.notas)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+  } else if (tipo === 'glicemia') {
+    titulo = 'Glicemia';
+    const dados = await dadosGlicemia();
+    html = dados.length === 0
+      ? '<div class="relatorio-empty">Sem medições de glicemia registadas.</div>'
+      : `<table class="relatorio-table">
+          <thead><tr>
+            <th>Data</th><th>Hora</th><th>Valor</th><th>Contexto</th><th>Notas</th>
+          </tr></thead>
+          <tbody>${dados.map(d => `
+            <tr>
+              <td>${escapeHTML(d.data)}</td>
+              <td>${escapeHTML(d.hora)}</td>
+              <td>${d.valor} mg/dL</td>
+              <td>${escapeHTML(d.contexto)}</td>
+              <td>${escapeHTML(d.notas)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+  } else if (tipo === 'medicacao') {
+    titulo = 'Adesão à medicação (últimos 30 dias)';
+    const dados = await dadosAdesao(30);
+    if (dados.length === 0) {
+      html = '<div class="relatorio-empty">Sem agendamentos de medicação. Adicione na app primeiro.</div>';
+    } else {
+      // Resumo simples antes da tabela
+      const total = dados.length;
+      const tomados = dados.filter(d => d.tomado).length;
+      const taxa = total > 0 ? Math.round((tomados / total) * 100) : 0;
+      const resumo = `<p style="margin:6px 0 14px;font-size:13px;color:var(--ink)"><strong>Resumo:</strong> ${tomados} de ${total} tomas marcadas (${taxa}%)</p>`;
+      html = resumo + `<table class="relatorio-table">
+        <thead><tr>
+          <th>Data</th><th>Prevista</th><th>Medicamento</th><th>Dose</th><th>Estado</th><th>Hora real</th>
+        </tr></thead>
+        <tbody>${dados.map(d => `
+          <tr>
+            <td>${escapeHTML(d.data)}</td>
+            <td>${escapeHTML(d.hora_prevista)}</td>
+            <td>${escapeHTML(d.medicamento)}</td>
+            <td>${escapeHTML(d.dose)}</td>
+            <td>${d.tomado ? '<span class="tag tag--ok">Tomado</span>' : '<span class="tag tag--miss">Por marcar</span>'}</td>
+            <td>${escapeHTML(d.hora_real)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+    }
+  } else {
+    titulo = 'Relatório';
+    html = '<div class="relatorio-empty">Tipo desconhecido.</div>';
+  }
+
+  $('relatorio-tipo').textContent = titulo;
+  $('relatorio-conteudo').innerHTML = html;
+}
+
+$('relatorio-back').addEventListener('click', () => goToExportar());
+$('relatorio-print').addEventListener('click', () => window.print());
+$('relatorio-print-cta').addEventListener('click', () => window.print());
+
+// ============================================
 // Service Worker
 // ============================================
 

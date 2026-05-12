@@ -1690,3 +1690,211 @@ input:focus {
   font-size: 14px;
   list-style: none;
 }
+
+/* ============================================
+   EXPORTAR DADOS
+   ============================================ */
+
+.exportar { padding: 24px 20px 60px; }
+.exportar__intro {
+  font-size: 14px;
+  color: var(--ink-muted);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+.exportar__nota {
+  font-size: 12px;
+  color: var(--ink-muted);
+  text-align: center;
+  margin-top: 24px;
+  line-height: 1.5;
+}
+
+.exportar-group {
+  background: var(--surface);
+  border: 1.5px solid var(--mint-pale);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 12px;
+}
+.exportar-group__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+.exportar-group__title small {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--ink-muted);
+  margin-left: 4px;
+}
+.exportar-actions {
+  display: flex;
+  gap: 10px;
+}
+.exportar-actions .btn {
+  flex: 1;
+  margin: 0;
+  min-height: 44px;
+  padding: 10px 16px;
+}
+.btn--secondary {
+  background: var(--mint-pale);
+  color: var(--mint-dark);
+  border: 1.5px solid var(--mint);
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+.btn--secondary:hover {
+  background: var(--mint);
+  color: var(--surface);
+}
+
+/* ============================================
+   RELATÓRIO (para imprimir / guardar como PDF)
+   ============================================ */
+
+.view--relatorio {
+  background: var(--surface);
+  min-height: 100vh;
+}
+
+.relatorio {
+  padding: 24px 20px 60px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.relatorio-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 2px solid var(--mint);
+  padding-bottom: 18px;
+  margin-bottom: 22px;
+}
+.relatorio-logo {
+  height: 56px;
+  width: auto;
+}
+.relatorio-meta { flex: 1; }
+.relatorio-meta h2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 22px;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.relatorio-meta p {
+  font-size: 12px;
+  color: var(--ink-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.relatorio-conteudo { margin-bottom: 30px; }
+
+.relatorio-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 8px;
+}
+.relatorio-table th {
+  text-align: left;
+  background: var(--mint-pale);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  padding: 8px 10px;
+  border-bottom: 2px solid var(--mint);
+  font-size: 12px;
+}
+.relatorio-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--mint-pale);
+  color: var(--ink);
+}
+.relatorio-table tr:last-child td { border-bottom: none; }
+
+.relatorio-table .tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.relatorio-table .tag--ok {
+  background: rgba(31, 122, 110, 0.12);
+  color: var(--success);
+}
+.relatorio-table .tag--miss {
+  background: rgba(86, 111, 133, 0.10);
+  color: var(--ink-muted);
+}
+
+.relatorio-empty {
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--ink-muted);
+  font-style: italic;
+  background: var(--mint-pale);
+  border-radius: var(--radius-sm);
+  border: 1.5px dashed var(--mint-light);
+}
+
+.relatorio-rodape {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid var(--mint-pale);
+  padding-top: 14px;
+  margin-top: 20px;
+}
+.relatorio-rodape__logo {
+  height: 18px;
+  width: auto;
+}
+.relatorio-rodape p {
+  font-size: 10px;
+  color: var(--ink-muted);
+  margin: 0;
+}
+
+#relatorio-print-cta {
+  margin-top: 28px;
+}
+
+/* ============================================
+   STYLES DE IMPRESSÃO — só o relatório vai para o papel/PDF
+   ============================================ */
+
+@media print {
+  /* Esconde toda a app excepto a vista de relatório */
+  body * { visibility: hidden; }
+  .view--relatorio,
+  .view--relatorio * { visibility: visible; }
+  .view--relatorio {
+    position: absolute;
+    inset: 0;
+    background: white;
+  }
+  .no-print { display: none !important; }
+
+  /* Impede quebras feias dentro de items */
+  .relatorio-table tr { page-break-inside: avoid; }
+  .relatorio-cabecalho { page-break-after: avoid; }
+
+  /* Tira sombras e bordas pesadas */
+  .relatorio { padding: 0; max-width: 100%; }
+  body { background: white; }
+
+  /* Reforçar impressão de cores nos elementos importantes */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

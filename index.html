@@ -243,6 +243,12 @@
           <p class="perfil-notif__hint">Os lembretes funcionam enquanto a app estiver aberta ou em segundo plano. Se a fechar completamente, os alertas podem não disparar.</p>
         </div>
 
+        <button id="perfil-exportar" class="link-card">
+          <span class="link-card__icon">📤</span>
+          <span class="link-card__text">Exportar dados</span>
+          <span class="link-card__arrow">→</span>
+        </button>
+
         <button id="perfil-logout" class="btn btn--danger">Terminar sessão</button>
       </div>
     </section>
@@ -403,6 +409,73 @@
         <button type="submit" class="btn btn--primary">Guardar</button>
         <button type="button" id="medicao-form-delete" class="btn btn--danger" hidden>Apagar medição</button>
       </form>
+    </section>
+
+    <!-- ====== EXPORTAR DADOS ====== -->
+    <section class="view view--exportar" data-view="exportar" hidden>
+      <header class="app-header">
+        <button id="exportar-back" class="btn-icon" aria-label="Voltar" title="Voltar">←</button>
+        <h1>Exportar dados</h1>
+      </header>
+
+      <div class="exportar">
+        <p class="exportar__intro">Exporte os seus dados para partilhar com o seu médico ou guardar uma cópia.</p>
+
+        <section class="exportar-group">
+          <h2 class="exportar-group__title">Tensão arterial</h2>
+          <div class="exportar-actions">
+            <button class="btn btn--secondary" data-export="tensao" data-format="csv">CSV</button>
+            <button class="btn btn--secondary" data-export="tensao" data-format="pdf">PDF</button>
+          </div>
+        </section>
+
+        <section class="exportar-group">
+          <h2 class="exportar-group__title">Glicemia</h2>
+          <div class="exportar-actions">
+            <button class="btn btn--secondary" data-export="glicemia" data-format="csv">CSV</button>
+            <button class="btn btn--secondary" data-export="glicemia" data-format="pdf">PDF</button>
+          </div>
+        </section>
+
+        <section class="exportar-group">
+          <h2 class="exportar-group__title">Adesão à medicação <small>(últimos 30 dias)</small></h2>
+          <div class="exportar-actions">
+            <button class="btn btn--secondary" data-export="medicacao" data-format="csv">CSV</button>
+            <button class="btn btn--secondary" data-export="medicacao" data-format="pdf">PDF</button>
+          </div>
+        </section>
+
+        <p class="exportar__nota">Os dados nunca saem do seu telemóvel — esta exportação é gerada localmente a partir dos seus registos.</p>
+      </div>
+    </section>
+
+    <!-- ====== RELATÓRIO (para imprimir/PDF) ====== -->
+    <section class="view view--relatorio" data-view="relatorio" hidden>
+      <header class="app-header no-print">
+        <button id="relatorio-back" class="btn-icon" aria-label="Voltar" title="Voltar">←</button>
+        <h1>Relatório</h1>
+        <button id="relatorio-print" class="btn-icon" aria-label="Imprimir" title="Imprimir / Guardar como PDF">🖨</button>
+      </header>
+
+      <div class="relatorio">
+        <div class="relatorio-cabecalho">
+          <img src="./assets/abem-logo.png" alt="abem:" class="relatorio-logo">
+          <div class="relatorio-meta">
+            <h2 id="relatorio-tipo">Relatório</h2>
+            <p>Beneficiário: <strong id="relatorio-numero">—</strong></p>
+            <p>Gerado em: <span id="relatorio-data">—</span></p>
+          </div>
+        </div>
+
+        <div id="relatorio-conteudo" class="relatorio-conteudo"></div>
+
+        <div class="relatorio-rodape">
+          <img src="./assets/dignitude-logo.png" alt="Dignitude" class="relatorio-rodape__logo">
+          <p>Programa abem: · Rede Solidária do Medicamento · Dignitude</p>
+        </div>
+
+        <button id="relatorio-print-cta" class="btn btn--primary no-print">Imprimir / Guardar como PDF</button>
+      </div>
     </section>
 
   </main>
