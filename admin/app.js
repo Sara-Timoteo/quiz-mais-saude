@@ -86,14 +86,23 @@ $('login-form').addEventListener('submit', async (e) => {
   const original = btn.textContent;
   btn.textContent = 'A entrar…';
 
-  const { error } = await sb.auth.signInWithPassword({ email, password });
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
   btn.disabled = false;
   btn.textContent = original;
 
   if (error) {
-    showLoginError('Credenciais inválidas.');
+    // Mostrar mensagem específica do Supabase para diagnóstico
+    console.error('Login error:', error);
+    let msg = error.message || 'Erro desconhecido';
+    if (msg.toLowerCase().includes('email not confirmed')) {
+      msg = 'Email não está confirmado no Supabase. Vai a Authentication → Users e activa "Auto Confirm" para este utilizador.';
+    } else if (msg.toLowerCase().includes('invalid login credentials')) {
+      msg = 'Email ou password errados. Verifica os dois (cuidado com espaços e maiúsculas).';
+    }
+    showLoginError(msg);
     return;
   }
+  console.log('Login ok, session:', data.session);
   await checkSession();
 });
 
