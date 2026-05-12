@@ -2099,3 +2099,86 @@ input:focus {
   color: var(--surface);
   border-color: var(--mint);
 }
+
+/* ============================================
+   Fase 2g — Modelo de tomas (sem dias_semana)
+   ============================================ */
+
+/* Etiqueta "Agendada" inline na lista de tomas do dia */
+.tag-futura {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  background: var(--mint-pale);
+  color: var(--mint-dark);
+  border-radius: var(--radius-pill);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+}
+
+/* Tomas futuras: aspecto mais discreto, sem hover de "marcar" */
+.hoje-item--futura {
+  background: var(--mint-pale);
+  cursor: default;
+}
+.hoje-item--futura:hover {
+  background: var(--mint-pale);
+  border-color: var(--mint-light);
+}
+.hoje-item--futura .hoje-check {
+  background: transparent;
+  border-color: var(--mint-light);
+}
+.hoje-item--futura .hoje-check::after { opacity: 0; }
+
+/* Botão editar ao lado de cada toma */
+.toma-edit {
+  background: transparent;
+  border: none;
+  color: var(--ink-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  display: grid;
+  place-items: center;
+  transition: background 0.15s, color 0.15s;
+}
+.toma-edit:hover {
+  background: var(--mint-pale);
+  color: var(--mint-dark);
+}
+
+/* Datas inicial/final no formulário lado a lado */
+#med-form-range-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+#med-form-range-wrap label { margin-bottom: 16px; }
+#med-form-range-wrap input[type="date"] {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.5px solid var(--mint-light);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 16px;
+  background: var(--mint-pale);
+  color: var(--ink);
+}
+#med-form-range-wrap input[type="date"]:focus {
+  outline: none;
+  border-color: var(--mint);
+  background: var(--surface);
+  box-shadow: 0 0 0 4px rgba(138, 202, 201, 0.20);
+}
+
+/* Tag "Agendada" no relatório PDF */
+.relatorio-table .tag--future {
+  background: rgba(138, 202, 201, 0.20);
+  color: var(--mint-dark);
+}

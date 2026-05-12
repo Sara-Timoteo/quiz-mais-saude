@@ -558,105 +558,196 @@ function storeKey(suffix) {
 
 // Store: API local com a mesma forma da que tínhamos com Supabase
 const Store = {
-  async getAgendamentos() {
+  // ---------- TOMAS (modelo unificado: cada toma = data + hora concreta) ----------
+
+  async _readAllTomas() {
     try {
-      const raw = localStorage.getItem(storeKey('agendamentos'));
-      const all = raw ? JSON.parse(raw) : [];
-      return all.filter(a => a.ativo !== false)
-        .sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
+      const raw = localStorage.getItem(storeKey('tomas'));
+      return raw ? JSON.parse(raw) : [];
     } catch { return []; }
   },
 
-  async _saveAgendamentos(arr) {
-    try { localStorage.setItem(storeKey('agendamentos'), JSON.stringify(arr)); }
-    catch (e) { console.warn('Falha a guardar agendamentos local:', e); }
+  async _saveTomas(arr) {
+    try { localStorage.setItem(storeKey('tomas'), JSON.stringify(arr)); }
+    catch (e) { console.warn('Falha a guardar tomas local:', e); }
   },
 
-  async addAgendamento(row) {
-    const all = await this._readAllAgendamentos();
-    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    const novo = { id, criado_em: new Date().toISOString(), ativo: true, ...row };
-    all.push(novo);
-    await this._saveAgendamentos(all);
-    return novo;
+  async getTomas() {
+    // Devolve todas, migrando se preciso
+    await this._migrateIfNeeded();
+    return await this._readAllTomas();
   },
 
-  async updateAgendamento(id, patch) {
-    const all = await this._readAllAgendamentos();
-    const idx = all.findIndex(a => a.id === id);
-    if (idx === -1) throw new Error('Agendamento não encontrado');
+  async getTomasByData(dataISO) {
+    const all = await this.getTomas();
+    return all.filter(t => t.data === dataISO)
+      .sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
+  },
+
+  async getTomasInRange(deISO, ateISO) {
+    const all = await this.getTomas();
+    return all.filter(t => t.data >= deISO && t.data <= ateISO)
+      .sort((a, b) => {
+        if (a.data !== b.data) return a.data.localeCompare(b.data);
+        return (a.hora || '').localeCompare(b.hora || '');
+      });
+  },
+
+  async getTomaById(id) {
+    const all = await this._readAllTomas();
+    return all.find(t => t.id === id) || null;
+  },
+
+  _newTomaId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  },
+
+  async addToma(row) {
+    const all = await this._readAllTomas();
+    const nova = {
+      id: this._newTomaId(),
+      criado_em: new Date().toISOString(),
+      tomado: null,
+      hora_real: null,
+      ...row,
+    };
+    all.push(nova);
+    await this._saveTomas(all);
+    return nova;
+  },
+
+  async addTomasInRange(template, deISO, ateISO) {
+    // Cria uma toma por cada dia do intervalo (inclusive)
+    const all = await this._readAllTomas();
+    const ini = new Date(deISO);
+    const fim = new Date(ateISO);
+    if (fim < ini) throw new Error('Data final anterior à data inicial');
+    const novas = [];
+    let cursor = new Date(ini);
+    while (cursor <= fim) {
+      const y = cursor.getFullYear();
+      const m = String(cursor.getMonth() + 1).padStart(2, '0');
+      const d = String(cursor.getDate()).padStart(2, '0');
+      novas.push({
+        id: this._newTomaId() + '-' + novas.length,
+        criado_em: new Date().toISOString(),
+        tomado: null,
+        hora_real: null,
+        ...template,
+        data: `${y}-${m}-${d}`,
+      });
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    all.push(...novas);
+    await this._saveTomas(all);
+    return novas;
+  },
+
+  async updateToma(id, patch) {
+    const all = await this._readAllTomas();
+    const idx = all.findIndex(t => t.id === id);
+    if (idx === -1) throw new Error('Toma não encontrada');
     all[idx] = { ...all[idx], ...patch };
-    await this._saveAgendamentos(all);
+    await this._saveTomas(all);
     return all[idx];
   },
 
-  async deleteAgendamento(id) {
-    const all = await this._readAllAgendamentos();
-    const filtrado = all.filter(a => a.id !== id);
-    await this._saveAgendamentos(filtrado);
-    // remover também histórico associado
-    const hist = await this._readAllHistorico();
-    const histFiltrado = hist.filter(h => h.agendamento_id !== id);
-    await this._saveHistorico(histFiltrado);
+  async deleteToma(id) {
+    const all = await this._readAllTomas();
+    const filtrado = all.filter(t => t.id !== id);
+    await this._saveTomas(filtrado);
   },
 
-  async _readAllAgendamentos() {
-    try {
-      const raw = localStorage.getItem(storeKey('agendamentos'));
-      return raw ? JSON.parse(raw) : [];
-    } catch { return []; }
+  async marcarTomado(tomaId, tomado) {
+    const all = await this._readAllTomas();
+    const idx = all.findIndex(t => t.id === tomaId);
+    if (idx === -1) return;
+    all[idx].tomado = !!tomado;
+    all[idx].hora_real = tomado ? new Date().toISOString() : null;
+    await this._saveTomas(all);
   },
 
-  async getHistoricoHoje() {
-    return this.getHistoricoData(todayISO());
-  },
+  // ---------- MIGRAÇÃO do modelo antigo (agendamentos+historico → tomas) ----------
 
-  async getHistoricoData(dataISO) {
-    try {
-      const raw = localStorage.getItem(storeKey('historico'));
-      const all = raw ? JSON.parse(raw) : [];
-      return all.filter(h => h.data === dataISO);
-    } catch { return []; }
-  },
-
-  async _readAllHistorico() {
-    try {
-      const raw = localStorage.getItem(storeKey('historico'));
-      return raw ? JSON.parse(raw) : [];
-    } catch { return []; }
-  },
-
-  async _saveHistorico(arr) {
-    try { localStorage.setItem(storeKey('historico'), JSON.stringify(arr)); }
-    catch (e) { console.warn('Falha a guardar histórico local:', e); }
-  },
-
-  async marcarTomado(agendamentoId, tomado, dataISO = null) {
-    const all = await this._readAllHistorico();
-    const data = dataISO || todayISO();
-    const idx = all.findIndex(h => h.agendamento_id === agendamentoId && h.data === data);
-    const row = {
-      agendamento_id: agendamentoId,
-      data,
-      tomado: !!tomado,
-      hora_real: tomado ? new Date().toISOString() : null,
-    };
-    if (idx === -1) all.push(row);
-    else all[idx] = row;
-    await this._saveHistorico(all);
-  },
-
-  // Limpar tudo (usado no logout)
-  clearAll() {
+  async _migrateIfNeeded() {
     const num = userNumber() || 'anon';
+    const flagKey = `mais_saude_${num}_migrated_tomas`;
+    if (localStorage.getItem(flagKey) === '1') return;
+    if (localStorage.getItem(storeKey('tomas'))) {
+      // Já existem tomas; marca migração como feita
+      localStorage.setItem(flagKey, '1');
+      return;
+    }
+
+    // Ler dados antigos
+    let antigos = [];
+    let hist = [];
+    try {
+      const aRaw = localStorage.getItem(`mais_saude_${num}_agendamentos`);
+      antigos = aRaw ? JSON.parse(aRaw) : [];
+      const hRaw = localStorage.getItem(`mais_saude_${num}_historico`);
+      hist = hRaw ? JSON.parse(hRaw) : [];
+    } catch {}
+
+    if (antigos.length === 0) {
+      // Não há nada para migrar; marcar feita e seguir
+      localStorage.setItem(flagKey, '1');
+      return;
+    }
+
+    // Gerar tomas para [hoje - 30, hoje + 30]
+    const novas = [];
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    for (let off = -30; off <= 30; off++) {
+      const d = new Date(hoje); d.setDate(hoje.getDate() + off);
+      const dow = d.getDay();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const dataISO = `${y}-${m}-${day}`;
+
+      for (const a of antigos) {
+        if (a.ativo === false) continue;
+        if (!Array.isArray(a.dias_semana) || !a.dias_semana.includes(dow)) continue;
+        const histReg = hist.find(h => h.agendamento_id === a.id && h.data === dataISO);
+        novas.push({
+          id: this._newTomaId() + '-mig-' + novas.length,
+          criado_em: a.criado_em || new Date().toISOString(),
+          medicamento: a.medicamento,
+          dose: a.dose || null,
+          data: dataISO,
+          hora: String(a.hora || '08:00').slice(0, 5),
+          notas: a.notas || null,
+          tomado: histReg ? (histReg.tomado || null) : null,
+          hora_real: histReg && histReg.hora_real ? histReg.hora_real : null,
+        });
+      }
+    }
+
+    await this._saveTomas(novas);
+    localStorage.setItem(flagKey, '1');
+    // Remover dados antigos depois da migração
     try {
       localStorage.removeItem(`mais_saude_${num}_agendamentos`);
       localStorage.removeItem(`mais_saude_${num}_historico`);
-      localStorage.removeItem(`mais_saude_${num}_medicoes`);
     } catch {}
   },
 
-  // ---------- MEDIÇÕES (tensão arterial e glicemia) ----------
+  // ---------- Limpar tudo (usado no logout) ----------
+
+  clearAll() {
+    const num = userNumber() || 'anon';
+    try {
+      localStorage.removeItem(`mais_saude_${num}_tomas`);
+      localStorage.removeItem(`mais_saude_${num}_medicoes`);
+      localStorage.removeItem(`mais_saude_${num}_migrated_tomas`);
+      // Apaga remanescentes do modelo antigo (caso existam)
+      localStorage.removeItem(`mais_saude_${num}_agendamentos`);
+      localStorage.removeItem(`mais_saude_${num}_historico`);
+    } catch {}
+  },
+
+  // ---------- MEDIÇÕES (tensão arterial e glicemia) ---------- (inalterado)
 
   async _readAllMedicoes() {
     try {
@@ -761,40 +852,32 @@ const Notifications = {
     if (!this.isEnabled()) return;
     if (!this.isSupported() || Notification.permission !== 'granted') return;
 
-    const [agendamentos, historicos] = await Promise.all([
-      Store.getAgendamentos(),
-      Store.getHistoricoHoje(),
-    ]);
-
-    const dow = todayDOW();
+    const tomas = await Store.getTomasByData(todayISO());
     const now = Date.now();
 
-    for (const ag of agendamentos) {
-      if (!Array.isArray(ag.dias_semana) || !ag.dias_semana.includes(dow)) continue;
-      // já tomado hoje?
-      const tomado = historicos.some(h => h.agendamento_id === ag.id && h.tomado);
-      if (tomado) continue;
+    for (const t of tomas) {
+      if (t.tomado === true) continue; // já tomado, sem lembrete
 
-      const [h, m] = String(ag.hora).split(':').map(Number);
+      const [h, m] = String(t.hora).split(':').map(Number);
       const target = new Date();
       target.setHours(h || 0, m || 0, 0, 0);
       const delay = target.getTime() - now;
       if (delay <= 0) continue; // já passou
-      if (delay > 86400000) continue; // > 24h, ignorar por segurança
+      if (delay > 86400000) continue; // > 24h
 
-      const tid = setTimeout(() => this._show(ag), delay);
+      const tid = setTimeout(() => this._show(t), delay);
       this._timers.push(tid);
     }
   },
 
-  async _show(ag) {
+  async _show(t) {
     const title = 'Hora da medicação';
-    const body = ag.dose ? `${ag.medicamento} · ${ag.dose}` : ag.medicamento;
+    const body = t.dose ? `${t.medicamento} · ${t.dose}` : t.medicamento;
     const options = {
       body,
       icon: './icon-192.png',
       badge: './icon-192.png',
-      tag: `med-${ag.id}-${todayISO()}`,
+      tag: `med-${t.id}`,
       requireInteraction: false,
       vibrate: [200, 100, 200],
     };
@@ -811,9 +894,8 @@ const Notifications = {
   },
 };
 
-// estado em memória dos agendamentos do utente
-let _agendamentosCache = null;
-let _historicoHojeCache = null;
+// estado em memória (cache leve)
+let _tomasCache = null;
 
 function todayISO() {
   const d = new Date();
@@ -828,33 +910,23 @@ function nowMinutes() { const d = new Date(); return d.getHours() * 60 + d.getMi
 function timeToMinutes(hhmm) { if (!hhmm) return 0; const [h, m] = hhmm.split(':').map(Number); return h * 60 + (m || 0); }
 function timeShort(hhmm) { if (!hhmm) return ''; return String(hhmm).slice(0, 5); }
 
-async function fetchAgendamentos(force = false) {
-  if (!force && _agendamentosCache) return _agendamentosCache;
-  _agendamentosCache = await Store.getAgendamentos();
-  return _agendamentosCache;
-}
-
-async function fetchHistoricoHoje(force = false) {
-  if (!force && _historicoHojeCache) return _historicoHojeCache;
-  _historicoHojeCache = await Store.getHistoricoHoje();
-  return _historicoHojeCache;
+async function fetchTomas(force = false) {
+  if (!force && _tomasCache) return _tomasCache;
+  _tomasCache = await Store.getTomas();
+  return _tomasCache;
 }
 
 function invalidateMedCaches() {
-  _agendamentosCache = null;
-  _historicoHojeCache = null;
-  // Re-agendar notificações sempre que algo mude
+  _tomasCache = null;
   Notifications.reschedule().catch(() => {});
 }
 
-function agendamentosHoje(todos) {
-  const dow = todayDOW();
-  return todos.filter(a => Array.isArray(a.dias_semana) && a.dias_semana.includes(dow));
-}
-
-function isAgendamentoTomado(agendamentoId, historicos) {
-  const h = historicos.find(x => x.agendamento_id === agendamentoId);
-  return !!(h && h.tomado);
+// Estado de uma toma face à data/hora actual
+function estadoToma(t, todayIso = todayISO(), nowMin = nowMinutes()) {
+  if (t.data > todayIso) return 'futura';
+  if (t.data < todayIso) return 'passada';
+  // hoje
+  return 'hoje';
 }
 
 // ---------- Card "Próxima toma" no Dashboard ----------
@@ -864,130 +936,71 @@ async function renderProximaToma() {
   const num = userNumber();
   if (!num) { card.hidden = true; return; }
 
-  const [agendamentos, historicos] = await Promise.all([
-    fetchAgendamentos(),
-    fetchHistoricoHoje(),
-  ]);
+  const tomas = await fetchTomas();
+  const todayIso = todayISO();
+  const nowMin = nowMinutes();
 
-  const total = agendamentos.length;
+  // Total agendado (a partir de hoje)
+  const totalFuturas = tomas.filter(t => t.data >= todayIso).length;
   $('dashboard-medicamentos-sub').textContent =
-    total === 0 ? 'Nenhum medicamento agendado · adicione já'
-    : total === 1 ? '1 medicamento activo'
-    : `${total} medicamentos activos`;
+    totalFuturas === 0 ? 'Nenhuma toma agendada · adicione já'
+    : totalFuturas === 1 ? '1 toma agendada'
+    : `${totalFuturas} tomas agendadas`;
 
-  const hojeList = agendamentosHoje(agendamentos);
-  const naoTomados = hojeList.filter(a => !isAgendamentoTomado(a.id, historicos));
+  // Próxima toma = a mais cedo entre:
+  //  - hoje, hora ≥ agora, não marcada como tomada
+  //  - futura
+  const candidatas = tomas.filter(t => {
+    if (t.data > todayIso) return true;
+    if (t.data === todayIso) {
+      if (t.tomado === true) return false;
+      return timeToMinutes(t.hora) >= nowMin || t.tomado !== true;
+    }
+    return false;
+  });
 
-  if (naoTomados.length === 0) {
+  if (candidatas.length === 0) {
     card.hidden = true;
     return;
   }
 
-  naoTomados.sort((a, b) => timeToMinutes(a.hora) - timeToMinutes(b.hora));
-  const proxima = naoTomados[0];
+  candidatas.sort((a, b) => {
+    if (a.data !== b.data) return a.data.localeCompare(b.data);
+    return timeToMinutes(a.hora) - timeToMinutes(b.hora);
+  });
+  const proxima = candidatas[0];
 
   card.hidden = false;
-  $('proxima-toma-hora').textContent = timeShort(proxima.hora);
+  const prefixo = proxima.data === todayIso ? '' :
+    (proxima.data === isoFromDate(new Date(Date.now() + 86400000)) ? 'Amanhã · ' :
+    dateFromISO(proxima.data).toLocaleDateString('pt-PT') + ' · ');
+  $('proxima-toma-hora').textContent = prefixo + timeShort(proxima.hora);
   $('proxima-toma-nome').textContent = proxima.dose
     ? `${proxima.medicamento} · ${proxima.dose}`
     : proxima.medicamento;
 
   const btn = $('proxima-toma-marcar');
-  btn.onclick = async () => {
+  // Só permite marcar se for hoje (ou passado); futuras não
+  if (proxima.data > todayIso) {
     btn.disabled = true;
-    btn.textContent = 'A guardar…';
-    await Store.marcarTomado(proxima.id, true);
-    invalidateMedCaches();
+    btn.textContent = 'Agendada';
+  } else {
     btn.disabled = false;
     btn.textContent = 'Marcar como tomado';
-    await renderProximaToma();
-  };
-}
-
-// ---------- Página Medicamentos ----------
-
-async function goToMedicamentos() {
-  showView('medicamentos');
-  await renderMedicamentos();
-}
-
-async function renderMedicamentos() {
-  const hojeUl = $('hoje-list');
-  const todosUl = $('agendamentos-list');
-  hojeUl.innerHTML = '<li class="hoje-empty">A carregar…</li>';
-  todosUl.innerHTML = '<li class="agendamentos-empty">A carregar…</li>';
-
-  const [agendamentos, historicos] = await Promise.all([
-    fetchAgendamentos(true),
-    fetchHistoricoHoje(true),
-  ]);
-
-  const hoje = agendamentosHoje(agendamentos);
-  if (hoje.length === 0) {
-    hojeUl.innerHTML = '<li class="hoje-empty">Não há medicamentos agendados para hoje.</li>';
-  } else {
-    hojeUl.innerHTML = hoje.map(a => {
-      const tomado = isAgendamentoTomado(a.id, historicos);
-      const dose = a.dose ? ` · ${escapeHTML(a.dose)}` : '';
-      return `
-        <li class="hoje-item ${tomado ? 'hoje-item--tomado' : ''}" data-id="${escapeHTML(a.id)}" data-tomado="${tomado}">
-          <span class="hoje-check" aria-hidden="true"></span>
-          <span class="hoje-item__hora">${timeShort(a.hora)}</span>
-          <span class="hoje-item__info">
-            <span class="hoje-item__nome">${escapeHTML(a.medicamento)}</span>
-            ${dose ? `<span class="hoje-item__detalhe">${dose.replace(/^ · /, '')}</span>` : ''}
-          </span>
-        </li>
-      `;
-    }).join('');
-    hojeUl.querySelectorAll('.hoje-item').forEach(item => {
-      item.addEventListener('click', async () => {
-        const id = item.dataset.id;
-        const era = item.dataset.tomado === 'true';
-        const novo = !era;
-        item.classList.toggle('hoje-item--tomado', novo);
-        item.dataset.tomado = novo;
-        await Store.marcarTomado(id, novo);
-        invalidateMedCaches();
-      });
-    });
-  }
-
-  if (agendamentos.length === 0) {
-    todosUl.innerHTML = '<li class="agendamentos-empty">Ainda sem agendamentos. Toque no + para adicionar.</li>';
-  } else {
-    todosUl.innerHTML = agendamentos.map(a => {
-      const dias = (a.dias_semana || []).slice().sort((x,y) => ((x+6)%7) - ((y+6)%7))
-        .map(d => `<span class="dia-pill">${DIAS_LABELS[d]}</span>`).join('');
-      const dose = a.dose ? ` · ${escapeHTML(a.dose)}` : '';
-      return `
-        <li class="agendamento-item" data-id="${escapeHTML(a.id)}" role="button" tabindex="0">
-          <span class="agendamento-item__hora">${timeShort(a.hora)}</span>
-          <span class="agendamento-item__info">
-            <span class="agendamento-item__nome">${escapeHTML(a.medicamento)}${dose}</span>
-            <span class="agendamento-item__detalhe"><span class="dias-resumo">${dias}</span></span>
-          </span>
-          <span class="agendamento-item__arrow" aria-hidden="true">→</span>
-        </li>
-      `;
-    }).join('');
-    todosUl.querySelectorAll('.agendamento-item').forEach(item => {
-      const id = item.dataset.id;
-      const open = () => goToMedForm('edit', id);
-      item.addEventListener('click', open);
-      item.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
-      });
-    });
+    btn.onclick = async () => {
+      btn.disabled = true;
+      btn.textContent = 'A guardar…';
+      await Store.marcarTomado(proxima.id, true);
+      invalidateMedCaches();
+      btn.disabled = false;
+      btn.textContent = 'Marcar como tomado';
+      await renderProximaToma();
+    };
   }
 }
-
-$('medicamentos-back').addEventListener('click', () => goToDashboard());
-$('medicamentos-add').addEventListener('click', () => goToMedForm('new'));
-$('medicamentos-calendario').addEventListener('click', () => goToCalendario());
 
 // ============================================
-// CALENDÁRIO de medicação (marcação retroactiva)
+// MEDICAMENTOS = CALENDÁRIO (vista única)
 // ============================================
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -1007,15 +1020,20 @@ function dateFromISO(iso) {
   return new Date(y, m-1, d);
 }
 
-async function goToCalendario() {
+async function goToMedicamentos() {
+  // Por defeito mostra o mês actual com hoje seleccionado
   _calMonth = startOfMonth(new Date());
   _calSelected = todayISO();
-  showView('calendario');
+  showView('medicamentos');
   await renderCalendario();
   await renderCalendarioDia();
 }
 
-$('calendario-back').addEventListener('click', () => goToMedicamentos());
+$('medicamentos-back').addEventListener('click', () => goToDashboard());
+$('medicamentos-add').addEventListener('click', () => {
+  // Pré-preencher com o dia seleccionado no calendário
+  goToTomaForm('new', null, _calSelected || todayISO());
+});
 $('cal-prev').addEventListener('click', async () => {
   _calMonth = new Date(_calMonth.getFullYear(), _calMonth.getMonth() - 1, 1);
   await renderCalendario();
@@ -1035,11 +1053,13 @@ async function renderCalendario() {
   const lastDay = new Date(year, month + 1, 0).getDate();
   const todayIso = todayISO();
 
-  // Pré-carregar agendamentos e historico do mês
-  const [agendamentos, allHist] = await Promise.all([
-    fetchAgendamentos(),
-    Store._readAllHistorico(),
-  ]);
+  const tomas = await fetchTomas(true);
+
+  // Agrupar tomas por data para lookup rápido
+  const porData = {};
+  for (const t of tomas) {
+    (porData[t.data] = porData[t.data] || []).push(t);
+  }
 
   let html = '';
   for (let i = 0; i < firstWeekday; i++) {
@@ -1049,34 +1069,26 @@ async function renderCalendario() {
     const dataISO = `${year}-${pad2(month+1)}-${pad2(day)}`;
     const isToday = dataISO === todayIso;
     const isSelected = dataISO === _calSelected;
-    const isFuture = dataISO > todayIso;
 
-    // Calcular se há tomas agendadas e se todas foram marcadas
-    const dow = dateFromISO(dataISO).getDay();
-    const doses = agendamentos.filter(a => Array.isArray(a.dias_semana) && a.dias_semana.includes(dow));
-    const hasDoses = doses.length > 0;
-    let allTaken = false;
-    if (hasDoses) {
-      const histDay = allHist.filter(h => h.data === dataISO && h.tomado);
-      const idsTomados = new Set(histDay.map(h => h.agendamento_id));
-      allTaken = doses.every(d => idsTomados.has(d.id));
-    }
+    const tomasDia = porData[dataISO] || [];
+    const hasDoses = tomasDia.length > 0;
+    const allTaken = hasDoses && tomasDia.every(t => t.tomado === true);
 
     const classes = [
       'cal-cell',
       isToday && 'cal-cell--today',
       isSelected && 'cal-cell--selected',
-      isFuture && 'cal-cell--future',
       hasDoses && 'cal-cell--with-doses',
       allTaken && 'cal-cell--all-taken',
     ].filter(Boolean).join(' ');
 
-    html += `<button class="${classes}" data-date="${dataISO}" ${isFuture ? 'disabled' : ''}>${day}</button>`;
+    // Todos os dias são clicáveis agora (incluindo futuros — pode marcar/agendar tomas)
+    html += `<button class="${classes}" data-date="${dataISO}">${day}</button>`;
   }
 
   $('cal-grid').innerHTML = html;
 
-  $('cal-grid').querySelectorAll('.cal-cell:not(.cal-cell--empty):not([disabled])').forEach(btn => {
+  $('cal-grid').querySelectorAll('.cal-cell:not(.cal-cell--empty)').forEach(btn => {
     btn.addEventListener('click', async () => {
       _calSelected = btn.dataset.date;
       await renderCalendario();
@@ -1099,101 +1111,114 @@ async function renderCalendarioDia() {
   const diaSemana = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'][dataObj.getDay()];
   titulo.textContent = `${dataObj.getDate()} de ${MESES[dataObj.getMonth()]} · ${diaSemana}`;
 
-  const [agendamentos, hist] = await Promise.all([
-    fetchAgendamentos(),
-    Store.getHistoricoData(_calSelected),
-  ]);
+  const tomas = await Store.getTomasByData(_calSelected);
+  const todayIso = todayISO();
+  const isFuture = _calSelected > todayIso;
 
-  const dow = dataObj.getDay();
-  const doses = agendamentos
-    .filter(a => Array.isArray(a.dias_semana) && a.dias_semana.includes(dow))
-    .sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
-
-  if (doses.length === 0) {
-    lista.innerHTML = '<li class="hoje-empty">Sem tomas agendadas para este dia.</li>';
+  if (tomas.length === 0) {
+    const hint = isFuture
+      ? 'Sem tomas agendadas para este dia. Toque em + para adicionar.'
+      : 'Sem tomas registadas para este dia. Toque em + para adicionar.';
+    lista.innerHTML = `<li class="hoje-empty">${hint}</li>`;
     return;
   }
 
-  lista.innerHTML = doses.map(a => {
-    const h = hist.find(x => x.agendamento_id === a.id);
-    const tomado = !!(h && h.tomado);
-    const dose = a.dose ? ` · ${escapeHTML(a.dose)}` : '';
+  lista.innerHTML = tomas.map(t => {
+    const tomado = t.tomado === true;
+    const futura = t.data > todayIso;
+    const dose = t.dose ? ` · ${escapeHTML(t.dose)}` : '';
+    const tag = futura ? '<span class="tag-futura">Agendada</span>' : '';
     return `
-      <li class="hoje-item ${tomado ? 'hoje-item--tomado' : ''}" data-id="${escapeHTML(a.id)}" data-tomado="${tomado}">
+      <li class="hoje-item ${tomado ? 'hoje-item--tomado' : ''} ${futura ? 'hoje-item--futura' : ''}" data-id="${escapeHTML(t.id)}" data-tomado="${tomado}" data-futura="${futura}" role="button" tabindex="0">
         <span class="hoje-check" aria-hidden="true"></span>
-        <span class="hoje-item__hora">${timeShort(a.hora)}</span>
+        <span class="hoje-item__hora">${timeShort(t.hora)}</span>
         <span class="hoje-item__info">
-          <span class="hoje-item__nome">${escapeHTML(a.medicamento)}</span>
+          <span class="hoje-item__nome">${escapeHTML(t.medicamento)}${tag}</span>
           ${dose ? `<span class="hoje-item__detalhe">${dose.replace(/^ · /, '')}</span>` : ''}
         </span>
+        <button class="toma-edit" data-edit="${escapeHTML(t.id)}" aria-label="Editar" title="Editar">✎</button>
       </li>
     `;
   }).join('');
 
+  // Click no item (toggle tomado, só se não for futura)
   lista.querySelectorAll('.hoje-item').forEach(item => {
-    item.addEventListener('click', async () => {
+    item.addEventListener('click', async (e) => {
+      if (e.target.closest('.toma-edit')) return; // botão de editar tem o seu próprio handler
+      const futura = item.dataset.futura === 'true';
+      if (futura) {
+        // Não permite marcar tomas futuras
+        return;
+      }
       const id = item.dataset.id;
       const era = item.dataset.tomado === 'true';
       const novo = !era;
       item.classList.toggle('hoje-item--tomado', novo);
       item.dataset.tomado = novo;
-      await Store.marcarTomado(id, novo, _calSelected);
+      await Store.marcarTomado(id, novo);
       invalidateMedCaches();
-      // Re-render do calendário para actualizar pontos
       await renderCalendario();
+    });
+  });
+
+  // Botão editar de cada toma
+  lista.querySelectorAll('.toma-edit').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      goToTomaForm('edit', btn.dataset.edit);
     });
   });
 }
 
-// ---------- Formulário de Medicamento (novo + editar) ----------
+// ============================================
+// Formulário de Toma (novo + editar)
+// ============================================
 
-let _editingMedId = null;
+let _editingTomaId = null;
 
-function goToMedForm(modo, id = null) {
-  _editingMedId = (modo === 'edit') ? id : null;
-  $('med-form-title').textContent = (modo === 'edit') ? 'Editar medicamento' : 'Novo medicamento';
+function goToTomaForm(modo, id = null, dataPre = null) {
+  _editingTomaId = (modo === 'edit') ? id : null;
+  $('med-form-title').textContent = (modo === 'edit') ? 'Editar toma' : 'Nova toma';
   $('med-form-error').hidden = true;
 
+  // Em modo edição não faz sentido o intervalo de datas — esconde data final
+  const dataAteLabel = document.querySelector('label[for="med-form-data-ate"]') ||
+    $('med-form-data-ate').closest('label');
   if (modo === 'edit') {
-    const ag = (_agendamentosCache || []).find(a => a.id === id);
-    if (ag) fillMedForm(ag);
-    else fetchAgendamentos(true).then(() => {
-      const a = (_agendamentosCache || []).find(x => x.id === id);
-      if (a) fillMedForm(a);
-    });
+    if (dataAteLabel) dataAteLabel.style.display = 'none';
     $('med-form-delete').hidden = false;
   } else {
-    clearMedForm();
+    if (dataAteLabel) dataAteLabel.style.display = '';
     $('med-form-delete').hidden = true;
+  }
+
+  if (modo === 'edit') {
+    Store.getTomaById(id).then(t => { if (t) fillTomaForm(t); });
+  } else {
+    clearTomaForm(dataPre || todayISO());
   }
 
   showView('med-form');
 }
 
-function clearMedForm() {
+function clearTomaForm(dataInicial) {
   $('med-form-id').value = '';
   $('med-form-nome').value = '';
   $('med-form-dose').value = '';
   $('med-form-hora').value = '08:00';
+  $('med-form-data-de').value = dataInicial;
+  $('med-form-data-ate').value = '';
   $('med-form-notas').value = '';
-  document.querySelectorAll('#med-form-dias input[type="checkbox"]').forEach(c => c.checked = true);
 }
 
-function fillMedForm(a) {
-  $('med-form-id').value = a.id;
-  $('med-form-nome').value = a.medicamento || '';
-  $('med-form-dose').value = a.dose || '';
-  $('med-form-hora').value = timeShort(a.hora) || '08:00';
-  $('med-form-notas').value = a.notas || '';
-  const checks = document.querySelectorAll('#med-form-dias input[type="checkbox"]');
-  checks.forEach(c => {
-    c.checked = (a.dias_semana || []).includes(parseInt(c.value, 10));
-  });
-}
-
-function getMedFormDias() {
-  const checks = document.querySelectorAll('#med-form-dias input[type="checkbox"]:checked');
-  return Array.from(checks).map(c => parseInt(c.value, 10));
+function fillTomaForm(t) {
+  $('med-form-id').value = t.id;
+  $('med-form-nome').value = t.medicamento || '';
+  $('med-form-dose').value = t.dose || '';
+  $('med-form-hora').value = timeShort(t.hora) || '08:00';
+  $('med-form-data-de').value = t.data || todayISO();
+  $('med-form-data-ate').value = ''; // não relevante em edição
+  $('med-form-notas').value = t.notas || '';
 }
 
 $('med-form').addEventListener('submit', async (e) => {
@@ -1203,27 +1228,35 @@ $('med-form').addEventListener('submit', async (e) => {
   const nome = $('med-form-nome').value.trim();
   const dose = $('med-form-dose').value.trim();
   const hora = $('med-form-hora').value;
+  const dataDe = $('med-form-data-de').value;
+  const dataAte = $('med-form-data-ate').value;
   const notas = $('med-form-notas').value.trim();
-  const dias = getMedFormDias();
 
   if (!nome) { showMedFormError('Indique o nome do medicamento.'); return; }
   if (!hora) { showMedFormError('Indique a hora.'); return; }
-  if (dias.length === 0) { showMedFormError('Escolha pelo menos um dia da semana.'); return; }
+  if (!dataDe) { showMedFormError('Indique a data inicial.'); return; }
+  if (dataAte && dataAte < dataDe) {
+    showMedFormError('A data final tem de ser igual ou posterior à data inicial.');
+    return;
+  }
 
-  const row = {
+  const template = {
     medicamento: nome,
     dose: dose || null,
     hora,
-    dias_semana: dias,
     notas: notas || null,
-    ativo: true,
   };
 
   try {
-    if (_editingMedId) {
-      await Store.updateAgendamento(_editingMedId, row);
+    if (_editingTomaId) {
+      // Edição: só altera esta toma (não cria série)
+      await Store.updateToma(_editingTomaId, { ...template, data: dataDe });
+    } else if (dataAte && dataAte > dataDe) {
+      // Intervalo: cria uma toma por dia
+      await Store.addTomasInRange(template, dataDe, dataAte);
     } else {
-      await Store.addAgendamento(row);
+      // Só esse dia
+      await Store.addToma({ ...template, data: dataDe });
     }
     invalidateMedCaches();
     goToMedicamentos();
@@ -1238,10 +1271,10 @@ function showMedFormError(msg) {
 }
 
 $('med-form-delete').addEventListener('click', async () => {
-  if (!_editingMedId) return;
-  if (!confirm('Apagar este agendamento? Vai também apagar o histórico associado.')) return;
+  if (!_editingTomaId) return;
+  if (!confirm('Apagar esta toma? Esta acção não pode ser desfeita.')) return;
   try {
-    await Store.deleteAgendamento(_editingMedId);
+    await Store.deleteToma(_editingTomaId);
     invalidateMedCaches();
     goToMedicamentos();
   } catch (err) {
@@ -1641,44 +1674,33 @@ async function dadosGlicemia(periodo) {
     }));
 }
 
-// Adesão à medicação: para cada dia do período, listar tomas esperadas com estado
+// Adesão à medicação: lista as tomas que existem no período (não as "esperadas
+// por padrão semanal" — só o que efectivamente foi agendado)
 async function dadosAdesao(periodo) {
-  const [agendamentos, hist] = await Promise.all([
-    Store.getAgendamentos(),
-    Store._readAllHistorico(),
-  ]);
-  const linhas = [];
-  const ini = dateFromISO(periodo.de);
-  const fim = dateFromISO(periodo.ate);
-  // Limitar a 365 dias por segurança
-  const diasTotal = Math.min(366, Math.floor((fim - ini) / 86400000) + 1);
+  const tomas = await Store.getTomasInRange(periodo.de, periodo.ate);
+  const todayIso = todayISO();
+  const linhas = tomas.map(t => {
+    let estado;
+    if (t.data > todayIso) estado = 'Agendada';
+    else if (t.tomado === true) estado = 'Tomada';
+    else if (t.tomado === false) estado = 'Não tomada';
+    else estado = (t.data === todayIso ? 'Por marcar' : 'Não marcada');
 
-  for (let i = 0; i < diasTotal; i++) {
-    const d = new Date(ini);
-    d.setDate(ini.getDate() + i);
-    if (d > fim) break;
-    const dow = d.getDay();
-    const dataISO = isoFromDate(d);
-    const dataLocal = d.toLocaleDateString('pt-PT');
+    const horaReal = (t.tomado === true && t.hora_real)
+      ? new Date(t.hora_real).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })
+      : '';
 
-    for (const ag of agendamentos) {
-      if (!Array.isArray(ag.dias_semana) || !ag.dias_semana.includes(dow)) continue;
-      const h = hist.find(x => x.agendamento_id === ag.id && x.data === dataISO);
-      const tomado = !!(h && h.tomado);
-      const horaReal = (tomado && h.hora_real)
-        ? new Date(h.hora_real).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })
-        : '';
-      linhas.push({
-        data: dataLocal,
-        dataISO,
-        hora_prevista: timeShort(ag.hora),
-        medicamento: ag.medicamento,
-        dose: ag.dose || '',
-        tomado,
-        hora_real: horaReal,
-      });
-    }
-  }
+    return {
+      data: dateFromISO(t.data).toLocaleDateString('pt-PT'),
+      dataISO: t.data,
+      hora_prevista: timeShort(t.hora),
+      medicamento: t.medicamento,
+      dose: t.dose || '',
+      estado,
+      tomado: t.tomado === true,
+      hora_real: horaReal,
+    };
+  });
 
   // Ordenar por data desc, dentro do dia por hora asc
   linhas.sort((a, b) => {
@@ -1736,7 +1758,7 @@ async function exportarCSV(tipo) {
   } else if (tipo === 'medicacao') {
     const dados = await dadosAdesao(periodo);
     headers = ['Data', 'Hora prevista', 'Medicamento', 'Dose', 'Estado', 'Hora real'];
-    rows = dados.map(d => [d.data, d.hora_prevista, d.medicamento, d.dose, d.tomado ? 'Tomado' : 'Por marcar', d.hora_real]);
+    rows = dados.map(d => [d.data, d.hora_prevista, d.medicamento, d.dose, d.estado, d.hora_real]);
     filename = `adesao-${num}-${dataStr}.csv`;
   } else {
     throw new Error('Tipo desconhecido: ' + tipo);
@@ -1806,15 +1828,28 @@ async function renderRelatorio(tipo) {
     titulo = 'Adesão à medicação';
     const dados = await dadosAdesao(periodo);
     if (dados.length === 0) {
-      html = '<div class="relatorio-empty">Sem agendamentos de medicação no período. Verifique se já adicionou medicamentos.</div>';
+      html = '<div class="relatorio-empty">Sem tomas registadas no período. Adicione tomas no calendário primeiro.</div>';
     } else {
-      const total = dados.length;
-      const tomados = dados.filter(d => d.tomado).length;
+      // Taxa de adesão considera apenas tomas que já passaram (passadas + hoje)
+      const consideradas = dados.filter(d => d.estado !== 'Agendada');
+      const total = consideradas.length;
+      const tomados = consideradas.filter(d => d.estado === 'Tomada').length;
+      const agendadas = dados.length - total;
       const taxa = total > 0 ? Math.round((tomados / total) * 100) : 0;
-      const resumo = `<p style="margin:6px 0 14px;font-size:13px;color:var(--ink)"><strong>Resumo:</strong> ${tomados} de ${total} tomas marcadas (${taxa}%)</p>`;
+      const resumoBase = total > 0
+        ? `<strong>Adesão:</strong> ${tomados} de ${total} tomas marcadas como tomadas (${taxa}%)`
+        : `<strong>Sem tomas passadas no período.</strong>`;
+      const resumoAg = agendadas > 0 ? ` · ${agendadas} tomas futuras agendadas.` : '';
+      const resumo = `<p style="margin:6px 0 14px;font-size:13px;color:var(--ink)">${resumoBase}${resumoAg}</p>`;
+      const tagFor = (estado) => {
+        if (estado === 'Tomada') return '<span class="tag tag--ok">Tomada</span>';
+        if (estado === 'Não tomada') return '<span class="tag tag--miss">Não tomada</span>';
+        if (estado === 'Agendada') return '<span class="tag tag--future">Agendada</span>';
+        return '<span class="tag tag--miss">' + escapeHTML(estado) + '</span>';
+      };
       html = resumo + `<table class="relatorio-table">
         <thead><tr>
-          <th>Data</th><th>Prevista</th><th>Medicamento</th><th>Dose</th><th>Estado</th><th>Hora real</th>
+          <th>Data</th><th>Hora</th><th>Medicamento</th><th>Dose</th><th>Estado</th><th>Hora real</th>
         </tr></thead>
         <tbody>${dados.map(d => `
           <tr>
@@ -1822,7 +1857,7 @@ async function renderRelatorio(tipo) {
             <td>${escapeHTML(d.hora_prevista)}</td>
             <td>${escapeHTML(d.medicamento)}</td>
             <td>${escapeHTML(d.dose)}</td>
-            <td>${d.tomado ? '<span class="tag tag--ok">Tomado</span>' : '<span class="tag tag--miss">Por marcar</span>'}</td>
+            <td>${tagFor(d.estado)}</td>
             <td>${escapeHTML(d.hora_real)}</td>
           </tr>`).join('')}
         </tbody>

@@ -2,7 +2,7 @@
    Estratégia: cache-first para assets estáticos, network para Supabase.
 */
 
-const CACHE_NAME = 'quiz-mais-saude-v9';
+const CACHE_NAME = 'quiz-mais-saude-v10';
 const ASSETS = [
   './',
   './index.html',

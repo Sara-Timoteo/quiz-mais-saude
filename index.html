@@ -253,33 +253,12 @@
       </div>
     </section>
 
-    <!-- ====== MEDICAMENTOS (lista + hoje) ====== -->
+    <!-- ====== MEDICAMENTOS (calendário + tomas do dia) ====== -->
     <section class="view view--medicamentos" data-view="medicamentos" hidden>
       <header class="app-header">
         <button id="medicamentos-back" class="btn-icon" aria-label="Voltar" title="Voltar">←</button>
         <h1>Medicamentos</h1>
-        <button id="medicamentos-calendario" class="btn-icon" aria-label="Calendário" title="Calendário">📅</button>
-        <button id="medicamentos-add" class="btn-icon" aria-label="Adicionar" title="Adicionar">+</button>
-      </header>
-
-      <!-- Tomas de hoje -->
-      <section class="med-section">
-        <h2 class="med-section__title">Hoje</h2>
-        <ul id="hoje-list" class="hoje-list"></ul>
-      </section>
-
-      <!-- Lista de agendamentos -->
-      <section class="med-section">
-        <h2 class="med-section__title">Agendamentos</h2>
-        <ul id="agendamentos-list" class="agendamentos-list"></ul>
-      </section>
-    </section>
-
-    <!-- ====== CALENDÁRIO DE MEDICAÇÃO ====== -->
-    <section class="view view--calendario" data-view="calendario" hidden>
-      <header class="app-header">
-        <button id="calendario-back" class="btn-icon" aria-label="Voltar" title="Voltar">←</button>
-        <h1>Calendário</h1>
+        <button id="medicamentos-add" class="btn-icon" aria-label="Adicionar toma" title="Adicionar toma">+</button>
       </header>
 
       <div class="calendario">
@@ -307,11 +286,11 @@
       </div>
     </section>
 
-    <!-- ====== FORMULÁRIO MEDICAMENTO (adicionar/editar) ====== -->
+    <!-- ====== FORMULÁRIO NOVA TOMA (adicionar/editar) ====== -->
     <section class="view view--med-form" data-view="med-form" hidden>
       <header class="app-header">
         <button id="med-form-back" class="btn-icon" aria-label="Voltar" title="Voltar">←</button>
-        <h1 id="med-form-title">Novo medicamento</h1>
+        <h1 id="med-form-title">Nova toma</h1>
       </header>
 
       <form id="med-form" class="med-form" novalidate>
@@ -332,18 +311,17 @@
           <input id="med-form-hora" type="time" required>
         </label>
 
-        <fieldset class="med-form-fieldset">
-          <legend>Dias da semana *</legend>
-          <div class="dias-grid" id="med-form-dias">
-            <label class="dia-check"><input type="checkbox" value="1" checked><span>Seg</span></label>
-            <label class="dia-check"><input type="checkbox" value="2" checked><span>Ter</span></label>
-            <label class="dia-check"><input type="checkbox" value="3" checked><span>Qua</span></label>
-            <label class="dia-check"><input type="checkbox" value="4" checked><span>Qui</span></label>
-            <label class="dia-check"><input type="checkbox" value="5" checked><span>Sex</span></label>
-            <label class="dia-check"><input type="checkbox" value="6" checked><span>Sáb</span></label>
-            <label class="dia-check"><input type="checkbox" value="0" checked><span>Dom</span></label>
-          </div>
-        </fieldset>
+        <div id="med-form-range-wrap">
+          <label>
+            <span>Data inicial *</span>
+            <input id="med-form-data-de" type="date" required>
+          </label>
+
+          <label>
+            <span>Data final <small style="font-weight:400">(vazio = só esse dia)</small></span>
+            <input id="med-form-data-ate" type="date">
+          </label>
+        </div>
 
         <label>
           <span>Notas</span>
@@ -353,7 +331,7 @@
         <div id="med-form-error" class="error" hidden></div>
 
         <button type="submit" class="btn btn--primary">Guardar</button>
-        <button type="button" id="med-form-delete" class="btn btn--danger" hidden>Apagar agendamento</button>
+        <button type="button" id="med-form-delete" class="btn btn--danger" hidden>Apagar esta toma</button>
       </form>
     </section>
 
