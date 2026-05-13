@@ -239,10 +239,10 @@
           Texto maior
           <small class="a11y-opt__hint">Aumenta o tamanho do texto na app</small>
         </label>
-        <span class="toggle">
+        <label class="toggle" for="a11y-large-text">
           <input type="checkbox" id="a11y-large-text">
           <span class="toggle__slider" aria-hidden="true"></span>
-        </span>
+        </label>
       </div>
 
       <div class="a11y-opt">
@@ -250,10 +250,10 @@
           Alto contraste
           <small class="a11y-opt__hint">Cores mais escuras e contornos mais fortes</small>
         </label>
-        <span class="toggle">
+        <label class="toggle" for="a11y-high-contrast">
           <input type="checkbox" id="a11y-high-contrast">
           <span class="toggle__slider" aria-hidden="true"></span>
-        </span>
+        </label>
       </div>
 
       <div class="a11y-opt">
@@ -261,10 +261,21 @@
           Animações reduzidas
           <small class="a11y-opt__hint">Desliga transições e efeitos animados</small>
         </label>
-        <span class="toggle">
+        <label class="toggle" for="a11y-reduced-motion">
           <input type="checkbox" id="a11y-reduced-motion">
           <span class="toggle__slider" aria-hidden="true"></span>
-        </span>
+        </label>
+      </div>
+
+      <div class="a11y-opt">
+        <label for="a11y-read-aloud" class="a11y-opt__label">
+          Ouvir páginas
+          <small class="a11y-opt__hint">Mostra um botão para ouvir o conteúdo em voz alta</small>
+        </label>
+        <label class="toggle" for="a11y-read-aloud">
+          <input type="checkbox" id="a11y-read-aloud">
+          <span class="toggle__slider" aria-hidden="true"></span>
+        </label>
       </div>
     </div>
   </div>
@@ -286,6 +297,9 @@
 
   <!-- ====== Live region para anúncios ====== -->
   <div id="a11y-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- ====== Botão flutuante "Ouvir" ====== -->
+  <button id="tts-btn" class="tts-btn" hidden type="button" aria-label="Ouvir esta página">🔊</button>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./app.js"></script>

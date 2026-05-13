@@ -720,7 +720,7 @@ function formatDateShort(iso) {
 // ============================================
 
 const A11Y_KEY = 'mais_saude_a11y_prefs';
-const A11Y_FLAGS = ['largeText', 'highContrast', 'reducedMotion'];
+const A11Y_FLAGS = ['largeText', 'highContrast', 'reducedMotion', 'readAloud'];
 
 const A11y = {
   load() {
@@ -734,6 +734,11 @@ const A11y = {
     document.body.classList.toggle('a11y-large-text', !!prefs.largeText);
     document.body.classList.toggle('a11y-high-contrast', !!prefs.highContrast);
     document.body.classList.toggle('a11y-reduced-motion', !!prefs.reducedMotion);
+    const ttsBtn = document.getElementById('tts-btn');
+    if (ttsBtn) {
+      ttsBtn.hidden = !prefs.readAloud;
+      if (!prefs.readAloud) TTS.stop();
+    }
   },
   set(flag, value) {
     const prefs = this.load();
@@ -770,6 +775,82 @@ function announce(msg) {
   el.textContent = '';
   setTimeout(() => { el.textContent = msg; }, 50);
 }
+
+// ============================================
+// LEITURA EM VOZ ALTA (TTS)
+// ============================================
+
+const TTS = {
+  speaking: false,
+  isSupported() { return 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window; },
+  toggle() { if (this.speaking) this.stop(); else this.start(); },
+  start() {
+    if (!this.isSupported()) { announce('Síntese de voz não suportada.'); return; }
+    // No admin a vista actual é a secção visível dentro do main
+    const section = document.querySelector('.admin-section:not([hidden])') ||
+                    document.querySelector('.admin-view:not([hidden])');
+    if (!section) return;
+    const text = this._extractText(section);
+    if (!text.trim()) { announce('Nada para ler.'); return; }
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-PT';
+    u.rate = 1.0;
+    u.onend = () => { this.speaking = false; this._updateButton(); };
+    u.onerror = () => { this.speaking = false; this._updateButton(); };
+    u.onstart = () => { this.speaking = true; this._updateButton(); };
+    window.speechSynthesis.speak(u);
+    this.speaking = true;
+    this._updateButton();
+  },
+  stop() {
+    if (this.isSupported()) window.speechSynthesis.cancel();
+    this.speaking = false;
+    this._updateButton();
+  },
+  _extractText(root) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        const parent = node.parentElement;
+        if (!parent) return NodeFilter.FILTER_REJECT;
+        if (parent.closest('[hidden]')) return NodeFilter.FILTER_REJECT;
+        if (parent.closest('[aria-hidden="true"]')) return NodeFilter.FILTER_REJECT;
+        if (parent.closest('.sr-only')) return NodeFilter.FILTER_REJECT;
+        if (parent.closest('script,style,noscript')) return NodeFilter.FILTER_REJECT;
+        const txt = node.textContent.trim();
+        if (!txt) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    const parts = [];
+    let n;
+    while ((n = walker.nextNode())) parts.push(n.textContent.trim());
+    return parts.join('. ').replace(/\.\s*\./g, '.').replace(/\s+/g, ' ');
+  },
+  _updateButton() {
+    const btn = document.getElementById('tts-btn');
+    if (!btn) return;
+    btn.textContent = this.speaking ? '⏸' : '🔊';
+    btn.classList.toggle('tts-btn--speaking', this.speaking);
+    btn.setAttribute('aria-label', this.speaking ? 'Parar leitura' : 'Ouvir esta página');
+  },
+};
+
+function bindTTS() {
+  const btn = document.getElementById('tts-btn');
+  if (btn) btn.addEventListener('click', () => TTS.toggle());
+  // Parar leitura ao mudar de secção (admin-section ou admin-view)
+  const obs = new MutationObserver((mutations) => {
+    for (const m of mutations) {
+      if (m.attributeName === 'hidden') { TTS.stop(); break; }
+    }
+  });
+  document.querySelectorAll('.admin-section, .admin-view').forEach(el => {
+    obs.observe(el, { attributes: true, attributeFilter: ['hidden'] });
+  });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindTTS);
+else bindTTS();
 
 // Botão de acessibilidade no header abre o modal
 $('admin-a11y-trigger').addEventListener('click', () => {

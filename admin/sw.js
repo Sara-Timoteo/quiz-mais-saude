@@ -1,7 +1,7 @@
 // Service Worker do painel admin
 // Cache mínima — apenas para satisfazer requisitos de PWA install
 
-const CACHE_NAME = 'abem-admin-v1';
+const CACHE_NAME = 'abem-admin-v2';
 const ASSETS = [
   './',
   './index.html',
