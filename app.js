@@ -481,6 +481,7 @@ async function goToPerfil() {
 
   renderPerfilNotif();
   renderPerfilRecompensas().catch(err => console.warn('Erro a carregar recompensas:', err));
+  if (typeof refreshInstallCard === 'function') refreshInstallCard();
 }
 
 async function renderPerfilRecompensas() {
@@ -1039,6 +1040,7 @@ async function renderProximaToma() {
       btn.textContent = 'A guardar…';
       await Store.marcarTomado(proxima.id, true);
       invalidateMedCaches();
+      announce('Toma marcada como tomada.');
       btn.disabled = false;
       btn.textContent = 'Marcar como tomado';
       await renderProximaToma();
@@ -1204,6 +1206,7 @@ async function renderCalendarioDia() {
       item.dataset.tomado = novo;
       await Store.marcarTomado(id, novo);
       invalidateMedCaches();
+      announce(novo ? 'Toma marcada como tomada.' : 'Toma desmarcada.');
       await renderCalendario();
     });
   });
@@ -1922,6 +1925,160 @@ async function renderRelatorio(tipo) {
 $('relatorio-back').addEventListener('click', () => goToExportar());
 $('relatorio-print').addEventListener('click', () => window.print());
 $('relatorio-print-cta').addEventListener('click', () => window.print());
+
+// ============================================
+// ACESSIBILIDADE — preferências do utilizador (texto maior, alto contraste, anim. reduzidas)
+// ============================================
+
+const A11Y_KEY = 'mais_saude_a11y_prefs';
+const A11Y_FLAGS = ['largeText', 'highContrast', 'reducedMotion'];
+
+const A11y = {
+  load() {
+    try {
+      const raw = localStorage.getItem(A11Y_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  },
+  save(prefs) {
+    try { localStorage.setItem(A11Y_KEY, JSON.stringify(prefs)); } catch {}
+  },
+  apply(prefs) {
+    document.body.classList.toggle('a11y-large-text', !!prefs.largeText);
+    document.body.classList.toggle('a11y-high-contrast', !!prefs.highContrast);
+    document.body.classList.toggle('a11y-reduced-motion', !!prefs.reducedMotion);
+  },
+  set(flag, value) {
+    const prefs = this.load();
+    prefs[flag] = !!value;
+    this.save(prefs);
+    this.apply(prefs);
+  },
+  init() {
+    const prefs = this.load();
+    this.apply(prefs);
+    // Liga os toggles do menu Acessibilidade (quando existirem)
+    A11Y_FLAGS.forEach(flag => {
+      const id = 'a11y-' + flag.replace(/([A-Z])/g, '-$1').toLowerCase();
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.checked = !!prefs[flag];
+      el.addEventListener('change', () => {
+        A11y.set(flag, el.checked);
+        announce(el.checked ? 'Preferência activada.' : 'Preferência desactivada.');
+      });
+    });
+  },
+};
+
+// Aplicar imediatamente as preferências antes de qualquer render visual
+A11y.apply(A11y.load());
+// Ligar toggles depois do DOM estar pronto
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => A11y.init());
+} else {
+  A11y.init();
+}
+
+// Anunciar mensagens dinâmicas para leitores de ecrã
+function announce(msg) {
+  const el = document.getElementById('a11y-announcer');
+  if (!el) return;
+  el.textContent = '';
+  // Pequeno timeout faz o screen reader detectar como nova mensagem
+  setTimeout(() => { el.textContent = msg; }, 50);
+}
+
+// ============================================
+// INSTALAR A APP — PWA install prompt
+// ============================================
+
+let _deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  // Browser está pronto a oferecer instalação
+  e.preventDefault();
+  _deferredInstallPrompt = e;
+  const card = document.getElementById('install-card');
+  if (card) card.hidden = false;
+});
+
+// Detectar iOS para mostrar instruções alternativas
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+function isInStandaloneMode() {
+  return ('standalone' in window.navigator && window.navigator.standalone) ||
+         window.matchMedia('(display-mode: standalone)').matches;
+}
+
+// Quando entras no Perfil, mostrar o install card se aplicável
+function refreshInstallCard() {
+  const card = document.getElementById('install-card');
+  if (!card) return;
+  if (isInStandaloneMode()) {
+    // Já está instalada
+    card.hidden = true;
+    return;
+  }
+  if (_deferredInstallPrompt) {
+    card.hidden = false;
+    return;
+  }
+  if (isIOS()) {
+    // iOS Safari não dispara beforeinstallprompt — mostrar de qualquer forma com instruções
+    card.hidden = false;
+    return;
+  }
+  // Outros browsers (Firefox, etc.) não tem install nativo neste contexto
+  card.hidden = true;
+}
+
+const installBtn = document.getElementById('install-btn');
+if (installBtn) {
+  installBtn.addEventListener('click', async () => {
+    if (isIOS()) {
+      // Abrir modal com instruções
+      const modal = document.getElementById('ios-install-modal');
+      modal.hidden = false;
+      // Focar no botão fechar para teclado
+      const closeBtn = document.getElementById('ios-install-close');
+      if (closeBtn) closeBtn.focus();
+      return;
+    }
+    if (!_deferredInstallPrompt) {
+      announce('Instalação não disponível neste browser.');
+      return;
+    }
+    _deferredInstallPrompt.prompt();
+    const { outcome } = await _deferredInstallPrompt.userChoice;
+    if (outcome === 'accepted') {
+      announce('App instalada com sucesso.');
+      document.getElementById('install-card').hidden = true;
+    }
+    _deferredInstallPrompt = null;
+  });
+}
+
+const iosClose = document.getElementById('ios-install-close');
+if (iosClose) {
+  iosClose.addEventListener('click', () => {
+    document.getElementById('ios-install-modal').hidden = true;
+  });
+}
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('ios-install-modal');
+    if (modal && !modal.hidden) modal.hidden = true;
+  }
+});
+
+// Quando app é instalada, esconder o card
+window.addEventListener('appinstalled', () => {
+  const card = document.getElementById('install-card');
+  if (card) card.hidden = true;
+  announce('App instalada no seu dispositivo.');
+});
 
 // ============================================
 // Service Worker

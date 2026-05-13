@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
+  <a href="#app" class="skip-link">Saltar para o conteúdo principal</a>
   <main id="app">
 
     <!-- ====== SPLASH ====== -->
@@ -246,6 +247,52 @@
         <div id="perfil-recompensas-wrap" class="perfil-recompensas" hidden>
           <h3 class="perfil-recompensas__title">As minhas recompensas <span id="perfil-recompensas-count"></span></h3>
           <ul id="perfil-recompensas-lista" class="recompensas-lista"></ul>
+        </div>
+
+        <div class="acessibilidade-card" role="group" aria-labelledby="a11y-title">
+          <h3 id="a11y-title" class="acessibilidade-card__title">♿ Acessibilidade</h3>
+
+          <div class="a11y-opt">
+            <label for="a11y-large-text" class="a11y-opt__label">
+              Texto maior
+              <small class="a11y-opt__hint">Aumenta o tamanho do texto na app</small>
+            </label>
+            <span class="toggle">
+              <input type="checkbox" id="a11y-large-text">
+              <span class="toggle__slider" aria-hidden="true"></span>
+            </span>
+          </div>
+
+          <div class="a11y-opt">
+            <label for="a11y-high-contrast" class="a11y-opt__label">
+              Alto contraste
+              <small class="a11y-opt__hint">Cores mais escuras e contornos mais fortes</small>
+            </label>
+            <span class="toggle">
+              <input type="checkbox" id="a11y-high-contrast">
+              <span class="toggle__slider" aria-hidden="true"></span>
+            </span>
+          </div>
+
+          <div class="a11y-opt">
+            <label for="a11y-reduced-motion" class="a11y-opt__label">
+              Animações reduzidas
+              <small class="a11y-opt__hint">Desliga transições e efeitos animados</small>
+            </label>
+            <span class="toggle">
+              <input type="checkbox" id="a11y-reduced-motion">
+              <span class="toggle__slider" aria-hidden="true"></span>
+            </span>
+          </div>
+        </div>
+
+        <div id="install-card" class="install-card" hidden>
+          <div class="install-card__icon" aria-hidden="true">📲</div>
+          <div class="install-card__body">
+            <div class="install-card__title">Instalar a app</div>
+            <div class="install-card__sub">Adicione ao ecrã principal para acesso rápido</div>
+          </div>
+          <button id="install-btn" class="install-card__btn" type="button">Instalar</button>
         </div>
 
         <button id="perfil-exportar" class="link-card">
@@ -515,6 +562,24 @@
     </section>
 
   </main>
+
+  <!-- ====== MODAL: Instruções de instalação para iOS ====== -->
+  <div id="ios-install-modal" class="modal-overlay" hidden role="dialog" aria-labelledby="ios-install-title" aria-modal="true">
+    <div class="modal-overlay__card">
+      <button class="modal-overlay__close" id="ios-install-close" aria-label="Fechar">×</button>
+      <h3 id="ios-install-title">📲 Instalar no iPhone ou iPad</h3>
+      <p style="font-size:14px;color:var(--ink-muted);margin-bottom:6px">Para adicionar a app ao ecrã principal:</p>
+      <ol>
+        <li>Toque no botão <strong>Partilhar</strong> ⬆ na barra do Safari</li>
+        <li>Deslize e seleccione <strong>"Adicionar ao ecrã principal"</strong></li>
+        <li>Confirme <strong>Adicionar</strong> no canto superior direito</li>
+      </ol>
+      <p style="font-size:12px;color:var(--ink-muted);margin-top:14px">A app vai aparecer como ícone no ecrã, igual a qualquer outra.</p>
+    </div>
+  </div>
+
+  <!-- ====== Live region para anúncios a leitores de ecrã ====== -->
+  <div id="a11y-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./app.js"></script>
