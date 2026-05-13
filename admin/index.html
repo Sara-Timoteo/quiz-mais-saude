@@ -4,12 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Painel Admin · abem:</title>
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#6BA8A7">
+  <link rel="apple-touch-icon" href="../icon-192.png">
   <link rel="stylesheet" href="./style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Sansita+Swashed:wght@400;700;800&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Saltar para o conteúdo principal</a>
 
   <!-- ====== LOGIN ====== -->
   <section class="admin-view view--login" data-view="login">
@@ -51,16 +55,27 @@
         <button class="admin-nav__btn" data-section="recompensas">Recompensas</button>
       </nav>
       <div class="admin-header__user">
+        <button id="admin-a11y-trigger" class="admin-a11y-trigger" aria-label="Acessibilidade" title="Acessibilidade">♿</button>
         <span id="admin-nome">…</span>
         <button id="admin-logout" class="btn-link">Sair</button>
       </div>
     </header>
 
-    <main class="admin-main">
+    <main id="main-content" class="admin-main">
 
       <!-- Dashboard -->
       <section id="section-dashboard" class="admin-section">
         <h2>Visão geral</h2>
+
+        <div id="admin-install-card" class="admin-install-card" hidden>
+          <div class="admin-install-card__icon" aria-hidden="true">📲</div>
+          <div class="admin-install-card__body">
+            <div class="admin-install-card__title">Instalar painel admin</div>
+            <div class="admin-install-card__sub">Adicione ao ecrã principal para acesso directo</div>
+          </div>
+          <button id="admin-install-btn" class="install-card__btn" type="button">Instalar</button>
+        </div>
+
         <div class="stats-grid stats-grid--admin">
           <div class="stat-card">
             <span class="stat-card__label">Utilizadores</span>
@@ -211,6 +226,66 @@
       </form>
     </div>
   </div>
+
+  <!-- ====== MODAL: Acessibilidade ====== -->
+  <div id="modal-a11y" class="modal" hidden role="dialog" aria-labelledby="a11y-modal-title" aria-modal="true">
+    <div class="modal__backdrop" data-modal-close></div>
+    <div class="modal__card admin-a11y-modal">
+      <button class="modal__close" data-modal-close aria-label="Fechar">×</button>
+      <h3 id="a11y-modal-title">♿ Acessibilidade</h3>
+
+      <div class="a11y-opt">
+        <label for="a11y-large-text" class="a11y-opt__label">
+          Texto maior
+          <small class="a11y-opt__hint">Aumenta o tamanho do texto na app</small>
+        </label>
+        <span class="toggle">
+          <input type="checkbox" id="a11y-large-text">
+          <span class="toggle__slider" aria-hidden="true"></span>
+        </span>
+      </div>
+
+      <div class="a11y-opt">
+        <label for="a11y-high-contrast" class="a11y-opt__label">
+          Alto contraste
+          <small class="a11y-opt__hint">Cores mais escuras e contornos mais fortes</small>
+        </label>
+        <span class="toggle">
+          <input type="checkbox" id="a11y-high-contrast">
+          <span class="toggle__slider" aria-hidden="true"></span>
+        </span>
+      </div>
+
+      <div class="a11y-opt">
+        <label for="a11y-reduced-motion" class="a11y-opt__label">
+          Animações reduzidas
+          <small class="a11y-opt__hint">Desliga transições e efeitos animados</small>
+        </label>
+        <span class="toggle">
+          <input type="checkbox" id="a11y-reduced-motion">
+          <span class="toggle__slider" aria-hidden="true"></span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== MODAL: Instruções iOS ====== -->
+  <div id="ios-install-modal" class="modal" hidden role="dialog" aria-labelledby="ios-install-title" aria-modal="true">
+    <div class="modal__backdrop" data-modal-close></div>
+    <div class="modal__card">
+      <button class="modal__close" data-modal-close aria-label="Fechar">×</button>
+      <h3 id="ios-install-title">📲 Instalar no iPhone ou iPad</h3>
+      <p style="font-size:14px;color:var(--ink-muted);margin-bottom:6px">Para adicionar o painel ao ecrã principal:</p>
+      <ol style="margin: 12px 0 0 22px; padding: 0;">
+        <li style="margin-bottom:8px;font-size:14px;line-height:1.5">Toque no botão <strong>Partilhar</strong> ⬆ na barra do Safari</li>
+        <li style="margin-bottom:8px;font-size:14px;line-height:1.5">Deslize e seleccione <strong>"Adicionar ao ecrã principal"</strong></li>
+        <li style="margin-bottom:8px;font-size:14px;line-height:1.5">Confirme <strong>Adicionar</strong> no canto superior direito</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- ====== Live region para anúncios ====== -->
+  <div id="a11y-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./app.js"></script>

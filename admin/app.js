@@ -715,6 +715,139 @@ function formatDateShort(iso) {
 // ARRANQUE
 // ============================================
 
+// ============================================
+// ACESSIBILIDADE
+// ============================================
+
+const A11Y_KEY = 'mais_saude_a11y_prefs';
+const A11Y_FLAGS = ['largeText', 'highContrast', 'reducedMotion'];
+
+const A11y = {
+  load() {
+    try {
+      const raw = localStorage.getItem(A11Y_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  },
+  save(prefs) { try { localStorage.setItem(A11Y_KEY, JSON.stringify(prefs)); } catch {} },
+  apply(prefs) {
+    document.body.classList.toggle('a11y-large-text', !!prefs.largeText);
+    document.body.classList.toggle('a11y-high-contrast', !!prefs.highContrast);
+    document.body.classList.toggle('a11y-reduced-motion', !!prefs.reducedMotion);
+  },
+  set(flag, value) {
+    const prefs = this.load();
+    prefs[flag] = !!value;
+    this.save(prefs);
+    this.apply(prefs);
+  },
+  init() {
+    const prefs = this.load();
+    this.apply(prefs);
+    A11Y_FLAGS.forEach(flag => {
+      const id = 'a11y-' + flag.replace(/([A-Z])/g, '-$1').toLowerCase();
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.checked = !!prefs[flag];
+      el.addEventListener('change', () => {
+        A11y.set(flag, el.checked);
+        announce(el.checked ? 'Preferência activada.' : 'Preferência desactivada.');
+      });
+    });
+  },
+};
+
+A11y.apply(A11y.load());
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => A11y.init());
+} else {
+  A11y.init();
+}
+
+function announce(msg) {
+  const el = document.getElementById('a11y-announcer');
+  if (!el) return;
+  el.textContent = '';
+  setTimeout(() => { el.textContent = msg; }, 50);
+}
+
+// Botão de acessibilidade no header abre o modal
+$('admin-a11y-trigger').addEventListener('click', () => {
+  $('modal-a11y').hidden = false;
+});
+
+// ============================================
+// INSTALAR APP — PWA install
+// ============================================
+
+let _deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  _deferredInstallPrompt = e;
+  const card = document.getElementById('admin-install-card');
+  if (card) card.hidden = false;
+});
+
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+function isInStandaloneMode() {
+  return ('standalone' in window.navigator && window.navigator.standalone) ||
+         window.matchMedia('(display-mode: standalone)').matches;
+}
+
+function refreshInstallCardAdmin() {
+  const card = document.getElementById('admin-install-card');
+  if (!card) return;
+  if (isInStandaloneMode()) { card.hidden = true; return; }
+  if (_deferredInstallPrompt || isIOS()) { card.hidden = false; return; }
+  card.hidden = true;
+}
+
+const installBtn = document.getElementById('admin-install-btn');
+if (installBtn) {
+  installBtn.addEventListener('click', async () => {
+    if (isIOS()) {
+      $('ios-install-modal').hidden = false;
+      return;
+    }
+    if (!_deferredInstallPrompt) {
+      announce('Instalação não disponível neste browser.');
+      return;
+    }
+    _deferredInstallPrompt.prompt();
+    const { outcome } = await _deferredInstallPrompt.userChoice;
+    if (outcome === 'accepted') {
+      announce('Painel instalado.');
+      document.getElementById('admin-install-card').hidden = true;
+    }
+    _deferredInstallPrompt = null;
+  });
+}
+
+window.addEventListener('appinstalled', () => {
+  const card = document.getElementById('admin-install-card');
+  if (card) card.hidden = true;
+});
+
+// ============================================
+// Service Worker
+// ============================================
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
+// ============================================
+// ARRANQUE
+// ============================================
+
 (async function init() {
   await checkSession();
+  // Re-init a11y depois do DOM estar populado (caso o modal não estivesse pronto antes)
+  A11y.init();
+  refreshInstallCardAdmin();
 })();

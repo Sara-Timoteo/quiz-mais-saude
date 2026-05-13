@@ -1,0 +1,27 @@
+{
+  "name": "abem: Mais Saúde · Admin",
+  "short_name": "abem: Admin",
+  "description": "Painel de administração do programa abem: Rede Solidária do Medicamento",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#6BA8A7",
+  "lang": "pt-PT",
+  "dir": "ltr",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "../icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "../icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
