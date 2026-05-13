@@ -1,0 +1,218 @@
+/* ============================================================
+   Quiz Mais Saúde — Consent modal styles
+   Designed to inherit your existing accessibility-mode classes:
+     body.large-text     → larger fonts
+     body.high-contrast  → darker palette, thicker borders
+     body.reduced-motion → no transitions
+   ============================================================ */
+
+.consent-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.consent-modal {
+  background: var(--color-surface, #FFFFFF);
+  color: var(--color-text, #1F5E5C);
+  border-radius: 12px;
+  padding: 1.5rem 1.75rem;
+  max-width: 560px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  border: 1.5px solid var(--color-border, #6BA8A7);
+  outline: none;
+}
+
+.consent-modal:focus {
+  outline: 2px solid var(--color-primary, #1F5E5C);
+  outline-offset: 2px;
+}
+
+.consent-modal h2 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.35rem;
+  color: var(--color-primary, #1F5E5C);
+  line-height: 1.25;
+}
+
+.consent-modal p {
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
+
+/* Each purpose block */
+.consent-purpose {
+  border: 1.5px solid var(--color-border, #E0EAEA);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+}
+
+.consent-purpose legend {
+  font-weight: 600;
+  padding: 0 0.4rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.consent-purpose legend input[type="checkbox"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.consent-purpose legend input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.consent-purpose p {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.95rem;
+  color: var(--color-text-secondary, #4A6464);
+}
+
+.consent-required {
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary, #4A6464);
+  font-style: italic;
+}
+
+.consent-reassurance {
+  background: var(--color-bg-soft, #F0F8F8);
+  border-left: 4px solid var(--color-primary, #6BA8A7);
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.consent-change-mind {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary, #4A6464);
+  font-style: italic;
+}
+
+.consent-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+@media (min-width: 480px) {
+  .consent-buttons {
+    flex-direction: row-reverse;     /* primary action on the right */
+  }
+}
+
+.consent-btn {
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;                  /* WCAG target size */
+  border: 1.5px solid transparent;
+  transition: background 150ms, border-color 150ms;
+}
+
+.consent-btn-accept {
+  background: var(--color-primary, #1F5E5C);
+  color: #FFFFFF;
+  border-color: var(--color-primary, #1F5E5C);
+  flex: 2;
+}
+
+.consent-btn-accept:hover,
+.consent-btn-accept:focus-visible {
+  background: var(--color-primary-dark, #103E3C);
+  outline: 2px solid var(--color-primary-dark, #103E3C);
+  outline-offset: 2px;
+}
+
+.consent-btn-refuse {
+  background: transparent;
+  color: var(--color-primary, #1F5E5C);
+  border-color: var(--color-border, #6BA8A7);
+  flex: 1;
+}
+
+.consent-btn-refuse:hover,
+.consent-btn-refuse:focus-visible {
+  background: var(--color-bg-soft, #F0F8F8);
+  outline: 2px solid var(--color-primary, #1F5E5C);
+  outline-offset: 2px;
+}
+
+/* Lock body scroll while modal is open */
+body.consent-open {
+  overflow: hidden;
+}
+
+/* === High contrast mode === */
+body.high-contrast .consent-overlay {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+body.high-contrast .consent-modal {
+  background: #FFFFFF;
+  color: #000000;
+  border: 2.5px solid #000000;
+}
+
+body.high-contrast .consent-modal h2 {
+  color: #000000;
+}
+
+body.high-contrast .consent-purpose {
+  border: 2.5px solid #000000;
+}
+
+body.high-contrast .consent-btn-accept {
+  background: #103E3C;
+  border-color: #000000;
+}
+
+body.high-contrast .consent-btn-refuse {
+  border-color: #000000;
+  color: #000000;
+}
+
+body.high-contrast .consent-reassurance {
+  background: #FFFFFF;
+  border-left: 4px solid #000000;
+  color: #000000;
+}
+
+/* === Reduced motion === */
+body.reduced-motion .consent-btn {
+  transition: none;
+}
+
+/* === Large text === */
+body.large-text .consent-modal {
+  font-size: 1.125rem;
+}
+
+body.large-text .consent-modal h2 {
+  font-size: 1.6rem;
+}
+
+body.large-text .consent-btn {
+  font-size: 1.125rem;
+  padding: 0.85rem 1.5rem;
+  min-height: 48px;
+}
