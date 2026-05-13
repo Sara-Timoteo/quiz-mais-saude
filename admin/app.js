@@ -737,7 +737,9 @@ const A11y = {
     const ttsBtn = document.getElementById('tts-btn');
     if (ttsBtn) {
       ttsBtn.hidden = !prefs.readAloud;
-      if (!prefs.readAloud) TTS.stop();
+      if (!prefs.readAloud) {
+        try { TTS.stop(); } catch (e) { /* TTS ainda não inicializado */ }
+      }
     }
   },
   set(flag, value) {
