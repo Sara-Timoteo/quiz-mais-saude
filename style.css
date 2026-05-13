@@ -2618,3 +2618,117 @@ body.a11y-reduced-motion *::after {
   line-height: 1.5;
 }
 .modal-overlay ol li strong { color: var(--mint-dark); }
+
+/* Botão flutuante de leitura em voz alta */
+.tts-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--mint-dark);
+  color: var(--surface);
+  border: 3px solid var(--surface);
+  font-size: 22px;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  transition: transform 0.18s, background 0.18s;
+}
+.tts-btn:hover {
+  background: var(--ink);
+  transform: scale(1.05);
+}
+.tts-btn--speaking {
+  background: var(--cherry);
+  animation: tts-pulse 1.4s infinite ease-in-out;
+}
+@keyframes tts-pulse {
+  0%, 100% { box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25), 0 0 0 0 rgba(216, 57, 74, 0.35); }
+  50%      { box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25), 0 0 0 14px rgba(216, 57, 74, 0); }
+}
+body.a11y-reduced-motion .tts-btn--speaking { animation: none; }
+
+/* Garantir que o label.toggle e span.toggle têm o mesmo aspecto */
+label.toggle { cursor: pointer; display: inline-block; }
+
+/* ============================================
+   FASE 4b — Nome personalizado, offline, install
+   ============================================ */
+
+/* Campo de input editável no Perfil */
+.perfil-field--editable {
+  background: var(--surface);
+  border: 1.5px solid var(--mint-pale);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  display: block;
+}
+.perfil-field--editable .perfil-field__label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  margin-bottom: 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.perfil-field__input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--mint-light);
+  border-radius: var(--radius-sm);
+  background: var(--mint-pale);
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--ink);
+  transition: all 0.15s;
+}
+.perfil-field__input:focus {
+  outline: none;
+  border-color: var(--mint);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(138, 202, 201, 0.20);
+}
+.perfil-field__hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--ink-muted);
+  line-height: 1.4;
+}
+
+/* Banner de offline */
+.offline-banner {
+  background: #C77A0C;
+  color: var(--surface);
+  text-align: center;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 95;
+}
+
+/* Estado "offline" para o card de instalar — cinza */
+.install-card--offline {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Link "Como instalar?" pequeno */
+.install-help-link {
+  font-size: 11px;
+  color: var(--mint-dark);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px 0;
+  font-family: var(--font-body);
+}

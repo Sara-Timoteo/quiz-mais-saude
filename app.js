@@ -186,7 +186,8 @@ async function goToDashboard() {
 
 async function loadDashboard() {
   const num = userNumber();
-  $('dashboard-user').textContent = num;
+  const nome = getUserName();
+  $('dashboard-user').textContent = nome || num;
 
   // Pre-carregar pontuação enquanto carrega níveis em segundo plano
   $('stat-quizzes').textContent = '…';
@@ -471,9 +472,25 @@ $('historico-back').addEventListener('click', () => goToDashboard());
 // PERFIL
 // ============================================
 
+// Nome personalizado guardado localmente por número de beneficiário
+function userNameKey() {
+  const n = userNumber() || 'anon';
+  return `mais_saude_${n}_nome`;
+}
+function getUserName() {
+  try { return localStorage.getItem(userNameKey()) || ''; } catch { return ''; }
+}
+function setUserName(nome) {
+  try {
+    if (nome && nome.trim()) localStorage.setItem(userNameKey(), nome.trim().slice(0, 40));
+    else localStorage.removeItem(userNameKey());
+  } catch {}
+}
+
 async function goToPerfil() {
   showView('perfil');
   $('perfil-numero').textContent = userNumber() || '—';
+  $('perfil-nome').value = getUserName();
 
   const stats = await loadUserStats(userNumber());
   $('perfil-total-quizzes').textContent = stats.total;
@@ -483,6 +500,23 @@ async function goToPerfil() {
   renderPerfilRecompensas().catch(err => console.warn('Erro a carregar recompensas:', err));
   if (typeof refreshInstallCard === 'function') refreshInstallCard();
 }
+
+// Guardar nome ao perder foco (blur) e ao premir Enter
+(function bindNomeInput() {
+  function bind() {
+    const inp = document.getElementById('perfil-nome');
+    if (!inp) return;
+    inp.addEventListener('blur', () => {
+      setUserName(inp.value);
+      announce('Nome guardado.');
+    });
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+  else bind();
+})();
 
 async function renderPerfilRecompensas() {
   const wrap = $('perfil-recompensas-wrap');
@@ -1931,7 +1965,7 @@ $('relatorio-print-cta').addEventListener('click', () => window.print());
 // ============================================
 
 const A11Y_KEY = 'mais_saude_a11y_prefs';
-const A11Y_FLAGS = ['largeText', 'highContrast', 'reducedMotion'];
+const A11Y_FLAGS = ['largeText', 'highContrast', 'reducedMotion', 'readAloud'];
 
 const A11y = {
   load() {
@@ -1947,6 +1981,12 @@ const A11y = {
     document.body.classList.toggle('a11y-large-text', !!prefs.largeText);
     document.body.classList.toggle('a11y-high-contrast', !!prefs.highContrast);
     document.body.classList.toggle('a11y-reduced-motion', !!prefs.reducedMotion);
+    // Botão "Ouvir" só aparece quando readAloud está ON
+    const ttsBtn = document.getElementById('tts-btn');
+    if (ttsBtn) {
+      ttsBtn.hidden = !prefs.readAloud;
+      if (!prefs.readAloud) TTS.stop();
+    }
   },
   set(flag, value) {
     const prefs = this.load();
@@ -1990,6 +2030,115 @@ function announce(msg) {
 }
 
 // ============================================
+// LEITURA EM VOZ ALTA — Web Speech API
+// ============================================
+
+const TTS = {
+  speaking: false,
+  _utterance: null,
+
+  isSupported() {
+    return 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+  },
+
+  toggle() {
+    if (this.speaking) this.stop();
+    else this.start();
+  },
+
+  start() {
+    if (!this.isSupported()) {
+      announce('Síntese de voz não suportada neste browser.');
+      return;
+    }
+    const view = document.querySelector('.view:not([hidden])');
+    if (!view) return;
+    const text = this._extractText(view);
+    if (!text.trim()) {
+      announce('Nada para ler nesta página.');
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-PT';
+    u.rate = 1.0;
+    u.pitch = 1.0;
+    u.onend = () => { this.speaking = false; this._updateButton(); };
+    u.onerror = () => { this.speaking = false; this._updateButton(); };
+    u.onstart = () => { this.speaking = true; this._updateButton(); };
+
+    this._utterance = u;
+    window.speechSynthesis.speak(u);
+    this.speaking = true;
+    this._updateButton();
+  },
+
+  stop() {
+    if (this.isSupported()) window.speechSynthesis.cancel();
+    this.speaking = false;
+    this._updateButton();
+  },
+
+  _extractText(root) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        const parent = node.parentElement;
+        if (!parent) return NodeFilter.FILTER_REJECT;
+        // Saltar elementos escondidos, sr-only e aria-hidden
+        if (parent.closest('[hidden]')) return NodeFilter.FILTER_REJECT;
+        if (parent.closest('[aria-hidden="true"]')) return NodeFilter.FILTER_REJECT;
+        if (parent.closest('.sr-only')) return NodeFilter.FILTER_REJECT;
+        if (parent.closest('script,style,noscript')) return NodeFilter.FILTER_REJECT;
+        const txt = node.textContent.trim();
+        if (!txt) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    const parts = [];
+    let n;
+    while ((n = walker.nextNode())) {
+      parts.push(n.textContent.trim());
+    }
+    return parts.join('. ').replace(/\.\s*\./g, '.').replace(/\s+/g, ' ');
+  },
+
+  _updateButton() {
+    const btn = document.getElementById('tts-btn');
+    if (!btn) return;
+    btn.textContent = this.speaking ? '⏸' : '🔊';
+    btn.classList.toggle('tts-btn--speaking', this.speaking);
+    btn.setAttribute('aria-label', this.speaking ? 'Parar leitura' : 'Ouvir esta página');
+  },
+};
+
+// Ligar o botão (depois do DOM estar pronto)
+function bindTTS() {
+  const btn = document.getElementById('tts-btn');
+  if (!btn) return;
+  btn.addEventListener('click', () => TTS.toggle());
+
+  // Parar a leitura sempre que mudamos de view (a visibilidade muda via [hidden])
+  const obs = new MutationObserver((mutations) => {
+    for (const m of mutations) {
+      if (m.attributeName === 'hidden') {
+        TTS.stop();
+        break;
+      }
+    }
+  });
+  document.querySelectorAll('.view').forEach(v => {
+    obs.observe(v, { attributes: true, attributeFilter: ['hidden'] });
+  });
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bindTTS);
+} else {
+  bindTTS();
+}
+
+// ============================================
 // INSTALAR A APP — PWA install prompt
 // ============================================
 
@@ -2017,46 +2166,43 @@ function refreshInstallCard() {
   const card = document.getElementById('install-card');
   if (!card) return;
   if (isInStandaloneMode()) {
-    // Já está instalada
+    // Já está instalada — esconde
     card.hidden = true;
     return;
   }
-  if (_deferredInstallPrompt) {
-    card.hidden = false;
-    return;
-  }
-  if (isIOS()) {
-    // iOS Safari não dispara beforeinstallprompt — mostrar de qualquer forma com instruções
-    card.hidden = false;
-    return;
-  }
-  // Outros browsers (Firefox, etc.) não tem install nativo neste contexto
-  card.hidden = true;
+  // Mostrar sempre (a lógica do botão trata de cada caso)
+  card.hidden = false;
 }
 
 const installBtn = document.getElementById('install-btn');
 if (installBtn) {
   installBtn.addEventListener('click', async () => {
+    if (_deferredInstallPrompt) {
+      // Browser pronto a oferecer instalação nativa
+      _deferredInstallPrompt.prompt();
+      const { outcome } = await _deferredInstallPrompt.userChoice;
+      if (outcome === 'accepted') {
+        announce('App instalada com sucesso.');
+        document.getElementById('install-card').hidden = true;
+      }
+      _deferredInstallPrompt = null;
+      return;
+    }
     if (isIOS()) {
-      // Abrir modal com instruções
+      // iOS Safari → instruções específicas
       const modal = document.getElementById('ios-install-modal');
       modal.hidden = false;
-      // Focar no botão fechar para teclado
       const closeBtn = document.getElementById('ios-install-close');
       if (closeBtn) closeBtn.focus();
       return;
     }
-    if (!_deferredInstallPrompt) {
-      announce('Instalação não disponível neste browser.');
-      return;
+    // Outros browsers → instruções genéricas
+    const generic = document.getElementById('generic-install-modal');
+    if (generic) {
+      generic.hidden = false;
+      const closeBtn = document.getElementById('generic-install-close');
+      if (closeBtn) closeBtn.focus();
     }
-    _deferredInstallPrompt.prompt();
-    const { outcome } = await _deferredInstallPrompt.userChoice;
-    if (outcome === 'accepted') {
-      announce('App instalada com sucesso.');
-      document.getElementById('install-card').hidden = true;
-    }
-    _deferredInstallPrompt = null;
   });
 }
 
@@ -2066,10 +2212,18 @@ if (iosClose) {
     document.getElementById('ios-install-modal').hidden = true;
   });
 }
+const genericClose = document.getElementById('generic-install-close');
+if (genericClose) {
+  genericClose.addEventListener('click', () => {
+    document.getElementById('generic-install-modal').hidden = true;
+  });
+}
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    const modal = document.getElementById('ios-install-modal');
-    if (modal && !modal.hidden) modal.hidden = true;
+    ['ios-install-modal', 'generic-install-modal'].forEach(id => {
+      const m = document.getElementById(id);
+      if (m && !m.hidden) m.hidden = true;
+    });
   }
 });
 
@@ -2079,6 +2233,28 @@ window.addEventListener('appinstalled', () => {
   if (card) card.hidden = true;
   announce('App instalada no seu dispositivo.');
 });
+
+// ============================================
+// Indicador de online/offline
+// ============================================
+
+function updateOnlineStatus() {
+  const banner = document.getElementById('offline-banner');
+  if (!banner) return;
+  if (navigator.onLine) {
+    banner.hidden = true;
+  } else {
+    banner.hidden = false;
+    announce('Sem ligação à internet.');
+  }
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', updateOnlineStatus);
+} else {
+  updateOnlineStatus();
+}
 
 // ============================================
 // Service Worker

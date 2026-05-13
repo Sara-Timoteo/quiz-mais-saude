@@ -15,6 +15,9 @@
 </head>
 <body>
   <a href="#app" class="skip-link">Saltar para o conteúdo principal</a>
+  <div id="offline-banner" class="offline-banner" role="status" aria-live="polite" hidden>
+    📡 Sem ligação — algumas funções podem não estar disponíveis.
+  </div>
   <main id="app">
 
     <!-- ====== SPLASH ====== -->
@@ -218,6 +221,12 @@
           <span class="perfil-field__value" id="perfil-numero">—</span>
         </div>
 
+        <div class="perfil-field perfil-field--editable">
+          <label class="perfil-field__label" for="perfil-nome">Como prefere ser tratada/o</label>
+          <input id="perfil-nome" class="perfil-field__input" type="text" placeholder="Escreva o seu nome (opcional)" maxlength="40" autocomplete="off">
+          <small class="perfil-field__hint">Guardado apenas no seu telemóvel. Aparece na saudação inicial.</small>
+        </div>
+
         <div class="perfil-field">
           <span class="perfil-field__label">Quizzes feitos</span>
           <span class="perfil-field__value" id="perfil-total-quizzes">—</span>
@@ -257,10 +266,10 @@
               Texto maior
               <small class="a11y-opt__hint">Aumenta o tamanho do texto na app</small>
             </label>
-            <span class="toggle">
+            <label class="toggle" for="a11y-large-text">
               <input type="checkbox" id="a11y-large-text">
               <span class="toggle__slider" aria-hidden="true"></span>
-            </span>
+            </label>
           </div>
 
           <div class="a11y-opt">
@@ -268,10 +277,10 @@
               Alto contraste
               <small class="a11y-opt__hint">Cores mais escuras e contornos mais fortes</small>
             </label>
-            <span class="toggle">
+            <label class="toggle" for="a11y-high-contrast">
               <input type="checkbox" id="a11y-high-contrast">
               <span class="toggle__slider" aria-hidden="true"></span>
-            </span>
+            </label>
           </div>
 
           <div class="a11y-opt">
@@ -279,10 +288,21 @@
               Animações reduzidas
               <small class="a11y-opt__hint">Desliga transições e efeitos animados</small>
             </label>
-            <span class="toggle">
+            <label class="toggle" for="a11y-reduced-motion">
               <input type="checkbox" id="a11y-reduced-motion">
               <span class="toggle__slider" aria-hidden="true"></span>
-            </span>
+            </label>
+          </div>
+
+          <div class="a11y-opt">
+            <label for="a11y-read-aloud" class="a11y-opt__label">
+              Ouvir páginas
+              <small class="a11y-opt__hint">Mostra um botão para ouvir o conteúdo em voz alta</small>
+            </label>
+            <label class="toggle" for="a11y-read-aloud">
+              <input type="checkbox" id="a11y-read-aloud">
+              <span class="toggle__slider" aria-hidden="true"></span>
+            </label>
           </div>
         </div>
 
@@ -578,8 +598,30 @@
     </div>
   </div>
 
+  <!-- ====== MODAL: Instruções genéricas (outros browsers) ====== -->
+  <div id="generic-install-modal" class="modal-overlay" hidden role="dialog" aria-labelledby="generic-install-title" aria-modal="true">
+    <div class="modal-overlay__card">
+      <button class="modal-overlay__close" id="generic-install-close" aria-label="Fechar">×</button>
+      <h3 id="generic-install-title">📲 Instalar a app</h3>
+      <p style="font-size:14px;color:var(--ink);margin-bottom:10px">O seu browser ainda não disponibilizou o botão de instalação automática.</p>
+      <p style="font-size:13px;color:var(--ink-muted);margin-bottom:6px"><strong>Chrome / Edge / Brave (Android/desktop):</strong></p>
+      <ol>
+        <li>Carregue no <strong>menu ⋮</strong> do browser (canto superior direito)</li>
+        <li>Escolha <strong>"Instalar app"</strong> ou <strong>"Adicionar ao ecrã principal"</strong></li>
+      </ol>
+      <p style="font-size:13px;color:var(--ink-muted);margin-top:12px;margin-bottom:6px"><strong>Firefox:</strong></p>
+      <ol>
+        <li>Menu ☰ → <strong>"Instalar"</strong> (Android) ou ainda não suportado em desktop</li>
+      </ol>
+      <p style="font-size:12px;color:var(--ink-muted);margin-top:14px">Depois de instalada, a app aparece como ícone próprio, sem barra de browser.</p>
+    </div>
+  </div>
+
   <!-- ====== Live region para anúncios a leitores de ecrã ====== -->
   <div id="a11y-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- ====== Botão flutuante "Ouvir" (síntese de voz) ====== -->
+  <button id="tts-btn" class="tts-btn" hidden type="button" aria-label="Ouvir esta página">🔊</button>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./app.js"></script>

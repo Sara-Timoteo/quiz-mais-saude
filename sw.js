@@ -2,7 +2,7 @@
    Estratégia: cache-first para assets estáticos, network para Supabase.
 */
 
-const CACHE_NAME = 'quiz-mais-saude-v12';
+const CACHE_NAME = 'quiz-mais-saude-v14';
 const ASSETS = [
   './',
   './index.html',
@@ -39,19 +39,31 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Nunca cacheia chamadas Supabase nem fontes — vão sempre à rede
-  if (url.hostname.includes('supabase.co') ||
-      url.hostname.includes('fonts.googleapis.com') ||
-      url.hostname.includes('fonts.gstatic.com') ||
-      url.hostname.includes('jsdelivr.net')) {
-    return; // deixa o browser tratar
+  // Supabase: cachear leituras GET selectivas (niveis, quiz_questoes, recompensas)
+  // para funcionar offline. Resto passa à rede sem cache.
+  if (url.hostname.includes('supabase.co')) {
+    if (event.request.method === 'GET' && (
+        url.pathname.includes('/rest/v1/niveis') ||
+        url.pathname.includes('/rest/v1/quiz_questoes') ||
+        url.pathname.includes('/rest/v1/recompensas')
+    )) {
+      event.respondWith(staleWhileRevalidate(event.request));
+      return;
+    }
+    return; // outras chamadas Supabase: deixa a rede tratar
   }
 
-  // Cache-first para o resto
+  // Fontes/CDN: também sempre à rede
+  if (url.hostname.includes('fonts.googleapis.com') ||
+      url.hostname.includes('fonts.gstatic.com') ||
+      url.hostname.includes('jsdelivr.net')) {
+    return;
+  }
+
+  // Cache-first para assets da app
   event.respondWith(
     caches.match(event.request).then(cached =>
       cached || fetch(event.request).then(resp => {
-        // Cacheia ao vivo o que vai sendo pedido (mesma origem apenas)
         if (resp.ok && url.origin === self.location.origin) {
           const copy = resp.clone();
           caches.open(CACHE_NAME).then(c => c.put(event.request, copy));
@@ -61,6 +73,28 @@ self.addEventListener('fetch', (event) => {
     )
   );
 });
+
+// Stale-while-revalidate: devolve cache imediatamente, actualiza em background
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request);
+  const networkPromise = fetch(request).then(resp => {
+    if (resp && resp.ok) cache.put(request, resp.clone());
+    return resp;
+  }).catch(() => null);
+
+  if (cached) {
+    // Devolver imediatamente o que está em cache; refresh acontece em paralelo
+    networkPromise.catch(() => {}); // garantir que a promise não fica unhandled
+    return cached;
+  }
+  // Sem cache — esperar pela rede
+  const fresh = await networkPromise;
+  return fresh || new Response(JSON.stringify({ error: 'offline' }), {
+    status: 503,
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
 
 // ============================================
 // Notificações: clique abre/foca a app
