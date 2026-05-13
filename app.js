@@ -43,6 +43,13 @@ if (!window.supabase || !window.supabase.createClient) {
   throw new Error('Supabase library not loaded');
 }
 
+// === NOVO: verificar que crypto e consent estão disponíveis ===
+if (!window.QMSCrypto || !window.QMSConsent) {
+  showFatalError('Módulos de segurança não carregaram. Verifique o seu HTML.');
+  throw new Error('QMSCrypto/QMSConsent not loaded — confirme que crypto.js e consent.js estão no HTML antes de app.js');
+}
+// === FIM NOVO ===
+
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ============================================
@@ -93,10 +100,18 @@ function formatDate(iso) {
 // Sessão e welcome flag
 // ============================================
 
-function saveSession(user) {
-  try { localStorage.setItem(SESSION_KEY, JSON.stringify(user)); } catch(_) {}
-  state.user = user;
+// === NOVO: saveSession agora aceita também o ano de nascimento, ===
+// ===       guardado junto à sessão para re-derivar a chave de    ===
+// ===       encriptação ao restaurar sessão entre refreshes.      ===
+function saveSession(user, anoNascimento) {
+  const toSave = (anoNascimento != null)
+    ? { ...user, ano_nascimento: anoNascimento }
+    : user;
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify(toSave)); } catch(_) {}
+  state.user = toSave;
 }
+// === FIM NOVO ===
+
 function loadSession() {
   try {
     const raw = localStorage.getItem(SESSION_KEY);
@@ -119,6 +134,17 @@ function userNumber() {
   return state.user?.numbeneficiario || state.user?.numero_beneficiario || '';
 }
 
+// === NOVO: lista de chaves localStorage sensíveis a encriptar ===
+function sensitiveStorageKeys() {
+  const num = userNumber() || 'anon';
+  return [
+    `mais_saude_${num}_tomas`,
+    `mais_saude_${num}_medicoes`,
+    `mais_saude_${num}_nome`,
+  ];
+}
+// === FIM NOVO ===
+
 // ============================================
 // LOGIN
 // ============================================
@@ -139,7 +165,15 @@ loginForm.addEventListener('submit', async (e) => {
   }
 
   if (!REQUIRE_LOGIN) {
-    saveSession({ numbeneficiario: numero, modo_teste: true });
+    saveSession({ numbeneficiario: numero, modo_teste: true }, ano);
+    // === NOVO: derivar chave e migrar dados também em modo de teste ===
+    try {
+      await window.QMSCrypto.deriveSessionKey(numero, ano);
+      await window.QMSCrypto.migrateToEncrypted(sensitiveStorageKeys());
+    } catch (err) {
+      console.warn('Crypto setup falhou em modo teste:', err);
+    }
+    // === FIM NOVO ===
     await goToDashboard();
     return;
   }
@@ -153,7 +187,41 @@ loginForm.addEventListener('submit', async (e) => {
       showLoginError('Número de beneficiário ou ano de nascimento inválidos.');
       return;
     }
-    saveSession(data[0]);
+
+    // === NOVO: derivar chave + migrar dados + verificar consentimento ===
+    const verifiedPin = data[0].numbeneficiario || data[0].numero_beneficiario || numero;
+
+    // Guardar sessão temporariamente para que userNumber() devolva o PIN
+    // (necessário para sensitiveStorageKeys() abaixo)
+    saveSession(data[0], ano);
+
+    try {
+      await window.QMSCrypto.deriveSessionKey(verifiedPin, ano);
+      await window.QMSCrypto.migrateToEncrypted(sensitiveStorageKeys());
+    } catch (err) {
+      console.error('Erro a configurar encriptação:', err);
+      clearSession();
+      showLoginError('Erro a inicializar segurança da sessão. Tente novamente.');
+      return;
+    }
+
+    // Verificar/pedir consentimento — bloqueia entrada se o utilizador recusar
+    try {
+      const consent = await window.QMSConsent.ensureConsent(verifiedPin, sb);
+      if (!consent) {
+        window.QMSCrypto.lockSession();
+        clearSession();
+        showLoginError('É necessário aceitar os termos de privacidade para usar a app.');
+        return;
+      }
+    } catch (err) {
+      window.QMSCrypto.lockSession();
+      clearSession();
+      showLoginError(err.message || 'Erro a registar o consentimento.');
+      return;
+    }
+    // === FIM NOVO ===
+
     await goToDashboard();
   } catch (err) {
     console.error('Login error:', err);
@@ -186,7 +254,9 @@ async function goToDashboard() {
 
 async function loadDashboard() {
   const num = userNumber();
-  const nome = getUserName();
+  // === NOVO: getUserName agora é async ===
+  const nome = await getUserName();
+  // === FIM NOVO ===
   $('dashboard-user').textContent = nome || num;
 
   // Pre-carregar pontuação enquanto carrega níveis em segundo plano
@@ -477,26 +547,41 @@ function userNameKey() {
   const n = userNumber() || 'anon';
   return `mais_saude_${n}_nome`;
 }
-function getUserName() {
-  try { return localStorage.getItem(userNameKey()) || ''; } catch { return ''; }
-}
-function setUserName(nome) {
+
+// === NOVO: getUserName/setUserName passam a usar encriptação ===
+async function getUserName() {
   try {
-    if (nome && nome.trim()) localStorage.setItem(userNameKey(), nome.trim().slice(0, 40));
-    else localStorage.removeItem(userNameKey());
-  } catch {}
+    const v = await window.QMSCrypto.secureGet(userNameKey());
+    return v || '';
+  } catch { return ''; }
 }
+async function setUserName(nome) {
+  try {
+    const trimmed = nome && nome.trim() ? nome.trim().slice(0, 40) : '';
+    if (trimmed) {
+      await window.QMSCrypto.secureSet(userNameKey(), trimmed);
+    } else {
+      localStorage.removeItem(userNameKey());
+    }
+  } catch (err) { console.warn('Falha a guardar nome:', err); }
+}
+// === FIM NOVO ===
 
 async function goToPerfil() {
   showView('perfil');
   $('perfil-numero').textContent = userNumber() || '—';
-  $('perfil-nome').value = getUserName();
+  // === NOVO: getUserName agora async ===
+  $('perfil-nome').value = await getUserName();
+  // === FIM NOVO ===
 
   const stats = await loadUserStats(userNumber());
   $('perfil-total-quizzes').textContent = stats.total;
   $('perfil-media').textContent = stats.total > 0 ? `${stats.media}%` : '—';
 
   renderPerfilNotif();
+  // === NOVO: carregar secção de consentimento ===
+  loadConsentSection().catch(err => console.warn('Erro consent section:', err));
+  // === FIM NOVO ===
   renderPerfilRecompensas().catch(err => console.warn('Erro a carregar recompensas:', err));
   if (typeof refreshInstallCard === 'function') refreshInstallCard();
 }
@@ -506,10 +591,12 @@ async function goToPerfil() {
   function bind() {
     const inp = document.getElementById('perfil-nome');
     if (!inp) return;
-    inp.addEventListener('blur', () => {
-      setUserName(inp.value);
+    // === NOVO: handler async para usar await setUserName ===
+    inp.addEventListener('blur', async () => {
+      await setUserName(inp.value);
       announce('Nome guardado.');
     });
+    // === FIM NOVO ===
     inp.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
     });
@@ -517,6 +604,77 @@ async function goToPerfil() {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
   else bind();
 })();
+
+// === NOVO: gestão da secção de consentimento no perfil ===
+async function loadConsentSection() {
+  const pin = userNumber();
+  const card = document.getElementById('perfil-consent');
+  if (!card) return;          // se ainda não adicionaste o HTML, ignora
+  const statusEl = document.getElementById('perfil-consent-status');
+  if (!pin) {
+    card.hidden = true;
+    return;
+  }
+  card.hidden = false;
+  try {
+    const consent = await window.QMSConsent.getConsentStatus(pin, sb);
+    if (consent) {
+      const grantedDate = new Date(consent.granted_at).toLocaleDateString('pt-PT');
+      const purposes = consent.purposes || {};
+      const lista = [];
+      if (purposes.quiz) lista.push('quiz');
+      if (purposes.rewards) lista.push('recompensas');
+      const listaTexto = lista.length ? ` (${lista.join(', ')})` : '';
+      statusEl.textContent = `Consentimento activo desde ${grantedDate}${listaTexto}.`;
+    } else {
+      statusEl.textContent = 'Sem consentimento activo.';
+    }
+  } catch (err) {
+    statusEl.textContent = 'Não foi possível verificar o estado do consentimento.';
+  }
+}
+
+// Wire-up do botão "Retirar consentimento"
+(function bindConsentWithdraw() {
+  function bind() {
+    const btn = document.getElementById('perfil-consent-withdraw');
+    if (!btn) return;
+    btn.addEventListener('click', async () => {
+      const confirmed = confirm(
+        'Esta acção vai apagar todos os seus resultados de quiz e recompensas do nosso sistema. '
+        + 'Os seus medicamentos e medições locais não são afectados. Quer continuar?'
+      );
+      if (!confirmed) return;
+      const pin = userNumber();
+      if (!pin) return;
+      btn.disabled = true;
+      btn.textContent = 'A apagar…';
+      try {
+        const success = await window.QMSConsent.withdrawConsent(pin, sb);
+        if (success) {
+          alert('Os seus dados foram apagados do nosso sistema. Vai sair da app.');
+          window.QMSCrypto.lockSession();
+          Notifications._clearTimers();
+          clearSession();
+          invalidateMedCaches();
+          loginForm.reset();
+          showView('login');
+        } else {
+          alert('Não foi possível processar o pedido. Tente novamente mais tarde.');
+          btn.disabled = false;
+          btn.textContent = 'Retirar consentimento e apagar os meus dados';
+        }
+      } catch (err) {
+        alert('Erro a apagar dados: ' + (err.message || err));
+        btn.disabled = false;
+        btn.textContent = 'Retirar consentimento e apagar os meus dados';
+      }
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+  else bind();
+})();
+// === FIM NOVO ===
 
 async function renderPerfilRecompensas() {
   const wrap = $('perfil-recompensas-wrap');
@@ -618,6 +776,9 @@ $('perfil-back').addEventListener('click', () => goToDashboard());
 $('perfil-logout').addEventListener('click', () => {
   if (confirm('Quer mesmo terminar sessão? Os seus medicamentos ficam guardados no telemóvel.')) {
     Notifications._clearTimers();
+    // === NOVO: limpar chave de encriptação da memória ===
+    window.QMSCrypto.lockSession();
+    // === FIM NOVO ===
     clearSession();
     invalidateMedCaches();
     loginForm.reset();
@@ -628,6 +789,7 @@ $('perfil-logout').addEventListener('click', () => {
 // ============================================
 // MEDICAMENTOS — armazenamento LOCAL no dispositivo
 // (decisão de privacidade: dados de saúde não saem do equipamento)
+// === NOVO: dados sensíveis encriptados via Web Crypto API (AES-GCM 256) ===
 // ============================================
 
 const DIAS_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -642,17 +804,22 @@ function storeKey(suffix) {
 const Store = {
   // ---------- TOMAS (modelo unificado: cada toma = data + hora concreta) ----------
 
+  // === NOVO: leitura via secureGet (com fallback automático para plaintext legado) ===
   async _readAllTomas() {
     try {
-      const raw = localStorage.getItem(storeKey('tomas'));
-      return raw ? JSON.parse(raw) : [];
+      const data = await window.QMSCrypto.secureGet(storeKey('tomas'));
+      if (Array.isArray(data)) return data;
+      return [];
     } catch { return []; }
   },
 
+  // === NOVO: escrita via secureSet (encripta antes de gravar) ===
   async _saveTomas(arr) {
-    try { localStorage.setItem(storeKey('tomas'), JSON.stringify(arr)); }
-    catch (e) { console.warn('Falha a guardar tomas local:', e); }
+    try {
+      await window.QMSCrypto.secureSet(storeKey('tomas'), arr);
+    } catch (e) { console.warn('Falha a guardar tomas local:', e); }
   },
+  // === FIM NOVO ===
 
   async getTomas() {
     // Devolve todas, migrando se preciso
@@ -761,7 +928,7 @@ const Store = {
       return;
     }
 
-    // Ler dados antigos
+    // Ler dados antigos (continuam em plaintext — formato legado)
     let antigos = [];
     let hist = [];
     try {
@@ -829,19 +996,24 @@ const Store = {
     } catch {}
   },
 
-  // ---------- MEDIÇÕES (tensão arterial e glicemia) ---------- (inalterado)
+  // ---------- MEDIÇÕES (tensão arterial e glicemia) ----------
 
+  // === NOVO: leitura via secureGet ===
   async _readAllMedicoes() {
     try {
-      const raw = localStorage.getItem(storeKey('medicoes'));
-      return raw ? JSON.parse(raw) : [];
+      const data = await window.QMSCrypto.secureGet(storeKey('medicoes'));
+      if (Array.isArray(data)) return data;
+      return [];
     } catch { return []; }
   },
 
+  // === NOVO: escrita via secureSet ===
   async _saveMedicoes(arr) {
-    try { localStorage.setItem(storeKey('medicoes'), JSON.stringify(arr)); }
-    catch (e) { console.warn('Falha a guardar medições local:', e); }
+    try {
+      await window.QMSCrypto.secureSet(storeKey('medicoes'), arr);
+    } catch (e) { console.warn('Falha a guardar medições local:', e); }
   },
+  // === FIM NOVO ===
 
   async getMedicoes(tipo) {
     const all = await this._readAllMedicoes();
@@ -2270,6 +2442,7 @@ if ('serviceWorker' in navigator) {
 
 // ============================================
 // ARRANQUE — splash → welcome / login / dashboard
+// === NOVO: restaurar chave de encriptação + verificar consentimento
 // ============================================
 
 (async function init() {
@@ -2277,7 +2450,49 @@ if ('serviceWorker' in navigator) {
   await sleep(2200);
 
   if (loadSession()) {
-    await goToDashboard();
+    // === NOVO: tentar re-derivar a chave de encriptação a partir
+    //          do PIN + ano guardados na sessão. Se faltar o ano
+    //          (sessão antiga, pré-encriptação), forçar re-login.
+    const pin = userNumber();
+    const ano = state.user?.ano_nascimento;
+
+    if (!pin || !ano) {
+      // Sessão sem ano de nascimento — formato antigo, força re-login
+      clearSession();
+      showView(hasWelcomed() ? 'login' : 'welcome');
+    } else {
+      try {
+        await window.QMSCrypto.deriveSessionKey(pin, ano);
+
+        // Verificar consentimento — pode ter sido revogado ou versão actualizada
+        try {
+          const consent = await window.QMSConsent.getConsentStatus(pin, sb);
+          const currentVersion = window.QMSConsent.CONSENT_VERSION;
+          if (!consent || consent.consent_version !== currentVersion) {
+            const newConsent = await window.QMSConsent.ensureConsent(pin, sb);
+            if (!newConsent) {
+              // Utilizador recusou consentimento → sair
+              window.QMSCrypto.lockSession();
+              clearSession();
+              showView('login');
+              return;
+            }
+          }
+        } catch (consentErr) {
+          console.warn('Verificação de consentimento falhou (a continuar):', consentErr);
+          // Se a verificação falhar (ex: offline), permite continuar — a
+          // próxima sincronização tentará de novo
+        }
+
+        await goToDashboard();
+      } catch (err) {
+        console.error('Falha a restaurar sessão:', err);
+        window.QMSCrypto.lockSession();
+        clearSession();
+        showView('login');
+      }
+    }
+    // === FIM NOVO ===
   } else if (hasWelcomed()) {
     showView('login');
   } else {

@@ -12,6 +12,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sansita+Slab:wght@400;700;800;900&family=Outfit:wght@300;400;500;600&display=swap">
   <link rel="stylesheet" href="./style.css">
+  <!-- === NOVO: estilos do modal de consentimento === -->
+  <link rel="stylesheet" href="./consent.css">
+  <!-- === FIM NOVO === -->
 </head>
 <body>
   <a href="#app" class="skip-link">Saltar para o conteúdo principal</a>
@@ -224,7 +227,7 @@
         <div class="perfil-field perfil-field--editable">
           <label class="perfil-field__label" for="perfil-nome">Como prefere ser tratada/o</label>
           <input id="perfil-nome" class="perfil-field__input" type="text" placeholder="Escreva o seu nome (opcional)" maxlength="40" autocomplete="off">
-          <small class="perfil-field__hint">Guardado apenas no seu telemóvel. Aparece na saudação inicial.</small>
+          <small class="perfil-field__hint">Guardado apenas no seu telemóvel, encriptado. Aparece na saudação inicial.</small>
         </div>
 
         <div class="perfil-field">
@@ -252,6 +255,19 @@
           </div>
           <p class="perfil-notif__hint">Os lembretes funcionam enquanto a app estiver aberta ou em segundo plano. Se a fechar completamente, os alertas podem não disparar.</p>
         </div>
+
+        <!-- === NOVO: card de privacidade e consentimento === -->
+        <div class="perfil-consent" id="perfil-consent" hidden>
+          <div class="perfil-consent__header">
+            <div class="perfil-consent__title">🔐 Privacidade</div>
+          </div>
+          <p id="perfil-consent-status" class="perfil-consent__status">A verificar…</p>
+          <p class="perfil-consent__hint">Os seus dados sobre medicamentos e medições ficam apenas no seu telemóvel, encriptados. Os resultados de quiz e recompensas ficam no sistema do programa, ligados apenas ao seu código de acesso.</p>
+          <button type="button" id="perfil-consent-withdraw" class="btn btn--danger btn--small">
+            Retirar consentimento e apagar os meus dados do sistema
+          </button>
+        </div>
+        <!-- === FIM NOVO === -->
 
         <div id="perfil-recompensas-wrap" class="perfil-recompensas" hidden>
           <h3 class="perfil-recompensas__title">As minhas recompensas <span id="perfil-recompensas-count"></span></h3>
@@ -624,6 +640,10 @@
   <button id="tts-btn" class="tts-btn" hidden type="button" aria-label="Ouvir esta página">🔊</button>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- === NOVO: módulos de segurança — TÊM de carregar antes do app.js === -->
+  <script src="./crypto.js"></script>
+  <script src="./consent.js"></script>
+  <!-- === FIM NOVO === -->
   <script src="./app.js"></script>
 </body>
 </html>
