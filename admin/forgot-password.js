@@ -5,7 +5,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 // === CONFIG — credenciais do projecto Sara ===
 const SUPABASE_URL = 'https://hhozgecuyczrbvyzvaoz.supabase.co';
-const SUPABASE_ANON_KEY = 'COLAR_AQUI_O_ANON_KEY';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhob3pnZWN1eWN6cmJ2eXp2YW96Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4MjA1NjUsImV4cCI6MjA2MjM5NjU2NX0.26C81920FzVHVCp6OFqCUhoo6NfDnVnTZhskVNuR5qo';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
