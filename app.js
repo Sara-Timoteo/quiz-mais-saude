@@ -681,10 +681,7 @@ async function renderPerfilRecompensas() {
   const lista = $('perfil-recompensas-lista');
   const count = $('perfil-recompensas-count');
 
-  const { data, error } = await sb.from('recompensas')
-    .select('*')
-    .eq('numero_beneficiario', userNumber())
-    .order('criado_em', { ascending: false });
+const { data, error } = await sb.rpc('get_recompensas', { p_pin: userNumber() });
 
   if (error || !data || data.length === 0) {
     wrap.hidden = true;
