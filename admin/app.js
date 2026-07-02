@@ -960,3 +960,56 @@ if ('serviceWorker' in navigator) {
   A11y.init();
   refreshInstallCardAdmin();
 })();
+
+
+// ============================================================
+// ⚠️ INÍCIO — BLOCO TEMPORÁRIO: LIMPAR DADOS DE TESTE
+//    Apaga resultados + recompensas + consents. MANTÉM os beneficiários.
+//    Backend: RPC limpar_dados_de_teste(p_confirmacao).
+//    >>> Para remover depois do lançamento: apagar tudo entre INÍCIO e FIM. <
+// ============================================================
+(function () {
+  const FRASE = 'APAGAR DADOS DE TESTE';
+  const alvo = document.getElementById('section-dashboard');
+  if (!alvo || document.getElementById('btn-limpar-teste')) return;
+
+  alvo.insertAdjacentHTML('beforeend', `
+    <div class="admin-card" style="border:2px dashed #c00000;background:#fff6f6;margin-top:2rem">
+      <h3 style="color:#c00000">⚠️ Temporário — limpar base de TESTE</h3>
+      <p class="hint">Apaga <strong>todos os resultados de quiz, recompensas e consentimentos</strong>. Os beneficiários são <strong>mantidos</strong>, com registo limpo. Usar uma única vez, antes do lançamento real. Ação irreversível.</p>
+      <button id="btn-limpar-teste" class="btn btn--secondary btn--small" type="button">Limpar dados de teste…</button>
+    </div>
+  `);
+
+  document.getElementById('btn-limpar-teste').addEventListener('click', async () => {
+    const escrito = prompt(
+      'Esta acao e IRREVERSIVEL.\n\n' +
+      'Apaga TODOS os resultados, recompensas e consentimentos.\n' +
+      'Os beneficiarios sao mantidos.\n\n' +
+      'Para confirmar, escreva exatamente:\n\n' + FRASE
+    );
+    if (escrito === null) return;
+    if (escrito.trim() !== FRASE) { alert('A frase nao coincide. Acao cancelada.'); return; }
+
+    const b = document.getElementById('btn-limpar-teste');
+    b.disabled = true; b.textContent = 'A limpar…';
+    try {
+      const { data, error } = await sb.rpc('limpar_dados_de_teste', { p_confirmacao: escrito.trim() });
+      if (error) throw error;
+      alert(
+        'Base de teste limpa.\n\n' +
+        'Resultados apagados: '     + data.resultados_apagados  + '\n' +
+        'Recompensas apagadas: '    + data.recompensas_apagadas + '\n' +
+        'Consentimentos apagados: ' + data.consents_apagados
+      );
+      if (typeof loadDashboard === 'function') await loadDashboard();
+    } catch (err) {
+      alert('Erro: ' + (err.message || err));
+    } finally {
+      b.disabled = false; b.textContent = 'Limpar dados de teste…';
+    }
+  });
+})();
+// ============================================================
+// ⚠️ FIM — BLOCO TEMPORÁRIO: LIMPAR DADOS DE TESTE
+// ============================================================
