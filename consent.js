@@ -85,7 +85,7 @@
 
   async function withdrawConsent(pin, sb) {
     try {
-      const { error } = await sb.rpc('withdraw_consent_and_erase', { p_pin: pin });
+      const { error } = await sb.rpc('retirar_consentimento', { p_pin: pin });
       if (error) {
         console.error('Failed to withdraw consent:', error);
         return false;
