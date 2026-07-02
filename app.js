@@ -1,7 +1,6 @@
-/* ============================================
-   QUIZ MAIS SAÚDE — Lógica da aplicação
-   Fase 2a: splash, welcome, dashboard, resultado %, histórico, perfil
-   ============================================ */
+/* 
+   MAIS SAÚDE — Lógica da aplicação
+ */
 
 // ============================================
 // CONFIGURAÇÃO
@@ -134,7 +133,7 @@ function userNumber() {
   return state.user?.numbeneficiario || state.user?.numero_beneficiario || '';
 }
 
-// === NOVO: lista de chaves localStorage sensíveis a encriptar ===
+// ===lista de chaves localStorage sensíveis a encriptar ===
 function sensitiveStorageKeys() {
   const num = userNumber() || 'anon';
   return [
@@ -276,7 +275,7 @@ async function loadDashboard() {
 
 async function loadUserStats(numero) {
   if (!numero) return { total: 0, media: 0 };
-  const { data, error } = await sb.rpc('get_resultados', { p_pin: numero });
+  const { data, error } = await sb.rpc('get_resultados', { p_pin: numero, p_limite: 100000 });
   if (error || !data) {
     console.warn('Erro ao carregar stats:', error);
     return { total: 0, media: 0 };
@@ -442,9 +441,9 @@ function showFeedback(text, kind) {
 
 $('quiz-back').addEventListener('click', () => goToNiveis());
 
-// ============================================
+
 // RESULTADO + Guardar no Supabase
-// ============================================
+
 
 async function finishLevel() {
   $('progress-fill').style.width = '100%';
@@ -485,7 +484,7 @@ async function finishLevel() {
 
 async function saveResultado(row) {
   if (!row.numero_beneficiario) return;
-  const { error } = await sb.rpc('guardar_resultado', {
+ const { error } = await sb.rpc('guardar_resultado', {
     p_numero: row.numero_beneficiario,
     p_id_nivel: row.id_nivel,
     p_nivel_nome: row.nivel_nome,
