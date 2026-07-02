@@ -646,7 +646,7 @@ async function loadConsentSection() {
       const pin = userNumber();
       if (!pin) return;
       btn.disabled = true;
-      btn.textContent = 'A apagar…';
+      btn.textContent = 'A processar…';
       try {
         const success = await window.QMSConsent.withdrawConsent(pin, sb);
         if (success) {
@@ -660,12 +660,12 @@ async function loadConsentSection() {
         } else {
           alert('Não foi possível processar o pedido. Tente novamente mais tarde.');
           btn.disabled = false;
-          btn.textContent = 'Retirar consentimento e apagar os meus dados';
+          btn.textContent = 'Retirar consentimento';
         }
       } catch (err) {
-        alert('Erro a apagar dados: ' + (err.message || err));
+        alert('Erro ao processar o pedido: ' + (err.message || err));
         btn.disabled = false;
-        btn.textContent = 'Retirar consentimento e apagar os meus dados';
+        btn.textContent = 'Retirar consentimento';
       }
     });
   }
