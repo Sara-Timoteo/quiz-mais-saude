@@ -376,6 +376,32 @@ async function goToDetalheUtilizador(numero) {
   `;
 
   $('atribuir-rec').addEventListener('click', () => openModalRecompensa(numero));
+
+  // === A1.2 — Pseudonimização RGPD (ação de admin, irreversível) ===
+  wrap.insertAdjacentHTML('beforeend', `
+    <div class="admin-card" style="border:1px solid #c00000;background:#fff6f6;margin-top:1rem">
+      <h3 style="color:#c00000">Zona sensível — RGPD</h3>
+      <p class="hint">Pseudonimizar substitui o número de beneficiário por um pseudónimo e retira o consentimento, mantendo os quizzes e recompensas sem identificação. Ação irreversível.</p>
+      <button id="btn-pseudonimizar" class="btn btn--secondary btn--small">Pseudonimizar a pedido do beneficiário</button>
+    </div>
+  `);
+
+  $('btn-pseudonimizar').addEventListener('click', async () => {
+    const escrito = prompt('Esta acao e IRREVERSIVEL. Para confirmar, escreva o numero de beneficiario exatamente:\n\n' + numero);
+    if (escrito === null) return;
+    if (escrito.trim() !== numero) { alert('O numero nao coincide. Acao cancelada.'); return; }
+    const b = $('btn-pseudonimizar');
+    b.disabled = true; b.textContent = 'A pseudonimizar…';
+    try {
+      const { data, error } = await sb.rpc('pseudonimizar_beneficiario', { p_pin: numero });
+      if (error) throw error;
+      alert('Feito. Novo pseudonimo: ' + data + '\nOs quizzes e recompensas foram mantidos, sem identificacao.');
+      showSection('utilizadores');
+    } catch (err) {
+      alert('Erro: ' + (err.message || err));
+      b.disabled = false; b.textContent = 'Pseudonimizar a pedido do beneficiário';
+    }
+  });
 }
 
 function renderRecompensaCard(r) {
