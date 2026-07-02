@@ -639,8 +639,8 @@ async function loadConsentSection() {
     if (!btn) return;
     btn.addEventListener('click', async () => {
       const confirmed = confirm(
-        'Esta acção vai apagar todos os seus resultados de quiz e recompensas do nosso sistema. '
-        + 'Os seus medicamentos e medições locais não são afectados. Quer continuar?'
+        'Vai retirar o seu consentimento e sair da app. Os resultados de quiz e recompensas deixam de estar associados a si. '
+        + 'Para apagar ou anonimizar totalmente os seus dados, contacte geral@dignitude.org. Quer continuar?'
       );
       if (!confirmed) return;
       const pin = userNumber();
@@ -650,7 +650,7 @@ async function loadConsentSection() {
       try {
         const success = await window.QMSConsent.withdrawConsent(pin, sb);
         if (success) {
-          alert('Os seus dados foram apagados do nosso sistema. Vai sair da app.');
+          alert('O seu consentimento foi retirado. Vai sair da app.');
           window.QMSCrypto.lockSession();
           Notifications._clearTimers();
           clearSession();
