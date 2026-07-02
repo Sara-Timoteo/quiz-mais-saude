@@ -276,10 +276,7 @@ async function loadDashboard() {
 
 async function loadUserStats(numero) {
   if (!numero) return { total: 0, media: 0 };
-  const { data, error } = await sb
-    .from(TABLE_RESULTADOS)
-    .select('percentagem')
-    .eq('numero_beneficiario', numero);
+  const { data, error } = await sb.rpc('get_resultados', { p_pin: numero });
   if (error || !data) {
     console.warn('Erro ao carregar stats:', error);
     return { total: 0, media: 0 };
@@ -488,7 +485,14 @@ async function finishLevel() {
 
 async function saveResultado(row) {
   if (!row.numero_beneficiario) return;
-  const { error } = await sb.from(TABLE_RESULTADOS).insert(row);
+  const { error } = await sb.rpc('guardar_resultado', {
+    p_numero: row.numero_beneficiario,
+    p_id_nivel: row.id_nivel,
+    p_nivel_nome: row.nivel_nome,
+    p_total: row.total_perguntas,
+    p_acertos: row.acertos,
+    p_percentagem: row.percentagem,
+  });
   if (error) console.warn('Erro ao guardar resultado:', error);
 }
 
@@ -512,12 +516,7 @@ async function goToHistorico() {
 async function loadHistorico() {
   const list = $('historico-list');
   list.innerHTML = '<li class="loading">A carregar…</li>';
-  const { data, error } = await sb
-    .from(TABLE_RESULTADOS)
-    .select('id, nivel_nome, percentagem, acertos, total_perguntas, criado_em')
-    .eq('numero_beneficiario', userNumber())
-    .order('criado_em', { ascending: false })
-    .limit(50);
+  const { data, error } = await sb.rpc('get_resultados', { p_pin: userNumber() });
 
   if (error) {
     list.innerHTML = `<li class="loading">Erro ao carregar histórico.<small>${escapeHTML(error.message)}</small></li>`;
