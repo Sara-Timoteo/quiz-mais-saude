@@ -553,7 +553,7 @@ async function goToHistorico() {
 async function loadHistorico() {
   const list = $('historico-list');
   list.innerHTML = '<li class="loading">A carregar…</li>';
-  const { data, error } = await sb.rpc('get_resultados', { p_pin: userNumber() });
+  const { data, error } = await sb.rpc('get_resultados', { p_pin: userNumber(), p_limite: 100000 });
 
   if (error) {
     list.innerHTML = `<li class="loading">Erro ao carregar histórico.<small>${escapeHTML(error.message)}</small></li>`;
