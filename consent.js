@@ -19,8 +19,6 @@
     version: CONSENT_VERSION,
     title: 'Antes de continuar',
     intro: 'A sua privacidade é importante. Antes de usar a app Mais Saúde, leia como tratamos os seus dados. Ao tocar em «Aceitar e continuar», concorda com este tratamento.',
-  
-    ],
     reassurance: 'Os dados sobre os seus medicamentos e medições (tensão, glicémia) ficam apenas no seu telemóvel, encriptados.',
     changeMind: 'Pode mudar de ideias a qualquer momento, no seu perfil.',
     buttonAccept: 'Aceitar e continuar',
