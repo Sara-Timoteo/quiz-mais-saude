@@ -33,7 +33,7 @@
         required: false,
       },
     ],
-    reassurance: 'Os dados sobre os seus medicamentos e medições (tensão, glicemia) ficam apenas no seu telemóvel, encriptados — nem o sistema do programa pode aceder a eles.',
+    reassurance: 'Os dados sobre os seus medicamentos e medições (tensão, glicemia) ficam apenas no seu telemóvel, encriptados.',
     changeMind: 'Pode mudar de ideias a qualquer momento, no seu perfil.',
     buttonAccept: 'Aceitar e continuar',
     buttonRefuse: 'Não aceito',
