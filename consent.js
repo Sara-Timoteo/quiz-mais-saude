@@ -26,12 +26,7 @@
         description: 'As suas respostas e pontuações serão guardadas no nosso sistema, associadas apenas ao código que recebeu — nunca ao seu nome.',
         required: true,
       },
-      {
-        key: 'rewards',
-        label: 'Receber recompensas',
-        description: 'Quando atingir os níveis, podem ser-lhe atribuídas recompensas, visíveis no seu perfil.',
-        required: false,
-      },
+  
     ],
     reassurance: 'Os dados sobre os seus medicamentos e medições (tensão, glicémia) ficam apenas no seu telemóvel, encriptados.',
     changeMind: 'Pode mudar de ideias a qualquer momento, no seu perfil.',
