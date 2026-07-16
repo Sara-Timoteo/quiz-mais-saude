@@ -694,7 +694,9 @@ const { data, error } = await sb.rpc('get_recompensas', { p_pin: userNumber() })
     if (r.tipo === 'imagem' && r.imagem_url) {
       return `
         <li class="recompensa-item">
-          <img src="${escapeHTML(r.imagem_url)}" alt="" class="recompensa-item__img">
+          <button type="button" class="recompensa-item__img-btn" data-lightbox data-img="${escapeHTML(r.imagem_url)}" data-titulo="${escapeHTML(r.titulo)}" data-desc="${escapeHTML(r.descricao || '')}" data-data="${escapeHTML(dataStr)}" aria-label="Ver recompensa ${escapeHTML(r.titulo)} em tamanho grande">
+            <img src="${escapeHTML(r.imagem_url)}" alt="" class="recompensa-item__img">
+          </button>
           <div class="recompensa-item__body">
             <div class="recompensa-item__titulo">${escapeHTML(r.titulo)}</div>
             ${r.descricao ? `<div class="recompensa-item__desc">${escapeHTML(r.descricao)}</div>` : ''}
@@ -716,6 +718,46 @@ const { data, error } = await sb.rpc('get_recompensas', { p_pin: userNumber() })
     `;
   }).join('');
 }
+
+// ====== Lightbox de recompensa ======
+(function initRecompensaLightbox() {
+  const modal = document.getElementById('recompensa-modal');
+  if (!modal) return;
+  const imgEl   = document.getElementById('recompensa-modal-img');
+  const titEl   = document.getElementById('recompensa-modal-titulo');
+  const descEl  = document.getElementById('recompensa-modal-desc');
+  const dataEl  = document.getElementById('recompensa-modal-data');
+  const closeBtn = document.getElementById('recompensa-modal-close');
+  let lastFocused = null;
+
+  function abrir(d) {
+    lastFocused = document.activeElement;
+    imgEl.src = d.img || '';
+    imgEl.alt = d.titulo ? `Recompensa: ${d.titulo}` : '';
+    titEl.textContent = d.titulo || '';
+    descEl.textContent = d.desc || '';
+    descEl.hidden = !d.desc;
+    dataEl.textContent = d.data ? `Atribuída em ${d.data}` : '';
+    modal.hidden = false;
+    closeBtn.focus();
+  }
+  function fechar() {
+    modal.hidden = true;
+    if (lastFocused && lastFocused.focus) lastFocused.focus();
+  }
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-lightbox]');
+    if (btn) {
+      abrir({ img: btn.dataset.img, titulo: btn.dataset.titulo, desc: btn.dataset.desc, data: btn.dataset.data });
+    }
+  });
+  closeBtn.addEventListener('click', fechar);
+  modal.addEventListener('click', (e) => { if (e.target === modal) fechar(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.hidden) fechar();
+  });
+})();
 
 function renderPerfilNotif() {
   const statusEl = $('perfil-notif-status');
