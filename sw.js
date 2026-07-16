@@ -1,8 +1,12 @@
 /* Service Worker — Quiz Mais Saúde
-   Estratégia: cache-first para assets estáticos, network para Supabase.
+   Estratégia: REDE PRIMEIRO para conteúdo próprio (HTML/JS/CSS) — mostra sempre a
+   versão nova quando há internet; a cache só serve de reserva quando estás offline.
+   Assim NÃO é preciso mudar a versão a cada deploy.
+   Exceções: leituras selectivas do Supabase (niveis/quiz_questoes/recompensas) ficam
+   em stale-while-revalidate para o quiz funcionar offline; fontes/CDN vão sempre à rede.
 */
 
-const CACHE_NAME = 'quiz-mais-saude-v18';
+const CACHE_NAME = 'quiz-mais-saude-v19';
 const ASSETS = [
   './',
   './index.html',
@@ -37,17 +41,18 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
+  const req = event.request;
+  const url = new URL(req.url);
 
   // Supabase: cachear leituras GET selectivas (niveis, quiz_questoes, recompensas)
   // para funcionar offline. Resto passa à rede sem cache.
   if (url.hostname.includes('supabase.co')) {
-    if (event.request.method === 'GET' && (
+    if (req.method === 'GET' && (
         url.pathname.includes('/rest/v1/niveis') ||
         url.pathname.includes('/rest/v1/quiz_questoes') ||
         url.pathname.includes('/rest/v1/recompensas')
     )) {
-      event.respondWith(staleWhileRevalidate(event.request));
+      event.respondWith(staleWhileRevalidate(req));
       return;
     }
     return; // outras chamadas Supabase: deixa a rede tratar
@@ -60,16 +65,23 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first para assets da app
+  if (req.method !== 'GET') return;
+  // Só tratamos ficheiros da nossa própria origem.
+  if (url.origin !== self.location.origin) return;
+
+  // REDE PRIMEIRO: tenta a rede, atualiza a cache e serve o novo.
+  // Se falhar (offline), serve o que houver em cache; para navegações, o index.
   event.respondWith(
-    caches.match(event.request).then(cached =>
-      cached || fetch(event.request).then(resp => {
-        if (resp.ok && url.origin === self.location.origin) {
-          const copy = resp.clone();
-          caches.open(CACHE_NAME).then(c => c.put(event.request, copy));
-        }
-        return resp;
-      }).catch(() => caches.match('./index.html'))
+    fetch(req).then(resp => {
+      if (resp && resp.ok) {
+        const copy = resp.clone();
+        caches.open(CACHE_NAME).then(c => c.put(req, copy));
+      }
+      return resp;
+    }).catch(() =>
+      caches.match(req).then(cached =>
+        cached || (req.mode === 'navigate' ? caches.match('./index.html') : Response.error())
+      )
     )
   );
 });
