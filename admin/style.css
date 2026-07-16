@@ -937,3 +937,32 @@ body.a11y-reduced-motion *::after {
 body.a11y-reduced-motion .tts-btn--speaking { animation: none; }
 
 label.toggle { cursor: pointer; display: inline-block; }
+
+/* ============================================
+   BARRA DE COFINANCIAMENTO (todos os ecrãs)
+   ============================================ */
+.funders-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  background: #fff;
+  padding: 6px 12px;
+  box-shadow: 0 -1px 6px rgba(31, 61, 77, 0.12);
+}
+.funders-bar img {
+  display: block;
+  width: 100%;
+  max-width: 680px;
+  height: auto;
+  margin: 0 auto;
+}
+/* espaço para a barra não tapar o conteúdo */
+body { padding-bottom: 66px; }
+/* levantar o botão "Ouvir" para não ficar por baixo da barra */
+.tts-btn { bottom: 80px; }
+@media (max-width: 420px) {
+  body { padding-bottom: 48px; }
+  .tts-btn { bottom: 62px; }
+}
