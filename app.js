@@ -452,7 +452,7 @@ function answer(chosen, chosenEl) {
   if (chosen === correct) {
     chosenEl.classList.add('option--correct');
     state.correctCount++;
-    showFeedback('✓  Resposta correcta!', 'success');
+    showFeedback('✓  Resposta correta!', 'success');
   } else {
     chosenEl.classList.add('option--wrong');
     const correctEl = document.querySelector(`.option[data-num="${correct}"]`);
@@ -499,7 +499,7 @@ async function finishLevel() {
   else msg = 'Pode melhorar — tente de novo.';
 
   $('resultado-percent').textContent = `${percent}%`;
-  $('resultado-detail').textContent = `${correct} de ${total} respostas correctas`;
+  $('resultado-detail').textContent = `${correct} de ${total} respostas corretas`;
   $('resultado-msg').textContent = msg;
 
   // Mostra ou esconde botão "Próximo nível" consoante haja próximo
@@ -820,13 +820,13 @@ function renderPerfilNotif() {
     statusEl.textContent = 'Activas';
     statusEl.className = 'perfil-notif__status perfil-notif__status--on';
     btn.hidden = false;
-    btn.textContent = 'Desactivar';
+    btn.textContent = 'Desativar';
     btn.className = 'perfil-notif__btn perfil-notif__btn--off';
   } else {
     statusEl.textContent = 'Desligadas';
     statusEl.className = 'perfil-notif__status perfil-notif__status--off';
     btn.hidden = false;
-    btn.textContent = 'Activar';
+    btn.textContent = 'Ativar';
     btn.className = 'perfil-notif__btn';
   }
 }
@@ -838,7 +838,7 @@ $('perfil-notif-btn').addEventListener('click', async () => {
   } else {
     const ok = await Notifications.enable();
     if (!ok && Notifications.permissionStatus() === 'denied') {
-      alert('Permissão bloqueada. Para activar, vá às definições do browser e permita notificações para esta app.');
+      alert('Permissão bloqueada. Para ativar, vá às definições do browser e permita notificações para esta app.');
     }
   }
   renderPerfilNotif();
@@ -2118,7 +2118,7 @@ async function renderRelatorio(tipo) {
     titulo = 'Tensão arterial';
     const dados = await dadosTensao(periodo);
     html = dados.length === 0
-      ? '<div class="relatorio-empty">Sem medições de tensão no período seleccionado.</div>'
+      ? '<div class="relatorio-empty">Sem medições de tensão no período selecionado.</div>'
       : `<table class="relatorio-table">
           <thead><tr>
             <th>Data</th><th>Hora</th><th>Sist.</th><th>Diast.</th><th>Pulso</th><th>Notas</th>
@@ -2138,7 +2138,7 @@ async function renderRelatorio(tipo) {
     titulo = 'Glicemia';
     const dados = await dadosGlicemia(periodo);
     html = dados.length === 0
-      ? '<div class="relatorio-empty">Sem medições de glicemia no período seleccionado.</div>'
+      ? '<div class="relatorio-empty">Sem medições de glicemia no período selecionado.</div>'
       : `<table class="relatorio-table">
           <thead><tr>
             <th>Data</th><th>Hora</th><th>Valor</th><th>Contexto</th><th>Notas</th>
@@ -2252,7 +2252,7 @@ const A11y = {
       el.checked = !!prefs[flag];
       el.addEventListener('change', () => {
         A11y.set(flag, el.checked);
-        announce(el.checked ? 'Preferência activada.' : 'Preferência desactivada.');
+        announce(el.checked ? 'Preferência ativada.' : 'Preferência desativada.');
       });
     });
   },
