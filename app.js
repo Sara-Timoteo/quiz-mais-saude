@@ -744,9 +744,11 @@ const { data, error } = await sb.rpc('get_recompensas', { p_pin: userNumber() })
         </li>
       `;
     }
+   // sem imagem: voucher (🎟️) ou medalha (🏅, quando é tipo imagem mas sem ficheiro)
+    const semImagemIcon = (r.tipo === 'voucher') ? '🎟️' : '🏅';
     return `
       <li class="recompensa-item">
-        <div class="recompensa-item__icon">🎟️</div>
+        <div class="recompensa-item__icon">${semImagemIcon}</div>
         <div class="recompensa-item__body">
           <div class="recompensa-item__titulo">${escapeHTML(r.titulo)}</div>
           ${r.descricao ? `<div class="recompensa-item__desc">${escapeHTML(r.descricao)}</div>` : ''}
