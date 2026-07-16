@@ -3,7 +3,7 @@
 // versão nova quando há internet; a cache só serve de reserva quando estás offline.
 // Assim NÃO é preciso mudar a versão a cada deploy.
 
-const CACHE_NAME = 'abem-admin-v5';
+const CACHE_NAME = 'abem-admin-v6';
 const ASSETS = [
   './',
   './index.html',
