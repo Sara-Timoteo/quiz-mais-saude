@@ -655,15 +655,10 @@ async function loadConsentSection() {
   try {
     const consent = await window.QMSConsent.getConsentStatus(pin, sb);
     if (consent) {
-      const grantedDate = new Date(consent.granted_at).toLocaleDateString('pt-PT');
-      const purposes = consent.purposes || {};
-      const lista = [];
-      if (purposes.quiz) lista.push('quiz');
-      if (purposes.rewards) lista.push('recompensas');
-      const listaTexto = lista.length ? ` (${lista.join(', ')})` : '';
-      statusEl.textContent = `Consentimento activo desde ${grantedDate}${listaTexto}.`;
+     const grantedDate = new Date(consent.granted_at).toLocaleDateString('pt-PT');
+      statusEl.textContent = `Registo de informação desde ${grantedDate}.`;
     } else {
-      statusEl.textContent = 'Sem consentimento activo.';
+      statusEl.textContent = 'Sem consentimento ativo.';
     }
   } catch (err) {
     statusEl.textContent = 'Não foi possível verificar o estado do consentimento.';
