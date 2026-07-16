@@ -273,6 +273,43 @@ async function loadDashboard() {
   loadNiveis().catch(() => {});
 }
 
+// ====== Aviso de recompensa nova (banner no painel) ======
+function recompensasVistasKey() {
+  const n = userNumber() || 'anon';
+  return `mais_saude_${n}_recompensas_vistas`;
+}
+function getRecompensasVistas() {
+  try { return parseInt(localStorage.getItem(recompensasVistasKey()) || '0', 10) || 0; }
+  catch { return 0; }
+}
+function setRecompensasVistas(n) {
+  try { localStorage.setItem(recompensasVistasKey(), String(n)); } catch {}
+}
+async function renderRecompensaBanner() {
+  const banner = document.getElementById('recompensa-banner');
+  if (!banner) return;
+  const num = userNumber();
+  if (!num) { banner.hidden = true; return; }
+  let total = 0;
+  try {
+    const { data, error } = await sb.rpc('get_recompensas', { p_pin: num });
+    if (error || !data) { banner.hidden = true; return; }
+    total = data.length;
+  } catch { banner.hidden = true; return; }
+  const novas = total - getRecompensasVistas();
+  if (novas > 0) {
+    document.getElementById('recompensa-banner-text').textContent =
+      novas === 1 ? 'Tens 1 recompensa nova!' : `Tens ${novas} recompensas novas!`;
+    banner.hidden = false;
+  } else {
+    banner.hidden = true;
+  }
+}
+(function bindRecompensaBanner() {
+  const btn = document.getElementById('recompensa-banner-btn');
+  if (btn) btn.addEventListener('click', () => goToPerfil());
+})();
+
 async function loadUserStats(numero) {
   if (!numero) return { total: 0, media: 0 };
   const { data, error } = await sb.rpc('get_resultados', { p_pin: numero, p_limite: 100000 });
