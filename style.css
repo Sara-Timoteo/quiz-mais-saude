@@ -137,7 +137,7 @@ body {
 /* Detalhe gráfico Abem: diagonais a 10° subtis no canto */
 .login-hero::before,
 .login-hero::after {
-  content: '';
+  content: none;
   position: absolute;
   top: 0;
   right: -40px;
