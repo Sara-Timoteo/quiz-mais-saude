@@ -419,9 +419,11 @@ function renderRecompensaCard(r) {
     `;
   }
   // voucher
+  // sem imagem: voucher (🎟️) ou medalha (🏅, quando é do tipo imagem mas sem ficheiro)
+  const semImagemIcon = (r.tipo === 'voucher') ? '🎟️' : '🏅';
   return `
     <div class="recompensa-card">
-      <div class="recompensa-card__icon">🎟️</div>
+      <div class="recompensa-card__icon">${semImagemIcon}</div>
       <div class="recompensa-card__body">
         <div class="recompensa-card__titulo">${escapeHTML(r.titulo)}</div>
         ${r.descricao ? `<div class="recompensa-card__meta">${escapeHTML(r.descricao)}</div>` : ''}
@@ -624,14 +626,15 @@ $('recompensa-form').addEventListener('submit', async (e) => {
 
     if (tipo === 'imagem') {
       const file = $('rec-imagem').files[0];
-      if (!file) throw new Error('Escolha uma imagem.');
-      // Upload para Storage
-      const ext = file.name.split('.').pop();
-      const path = `${numero}/${Date.now()}.${ext}`;
-      const { error: upErr } = await sb.storage.from('recompensas').upload(path, file);
-      if (upErr) throw upErr;
-      const { data: { publicUrl } } = sb.storage.from('recompensas').getPublicUrl(path);
-      row.imagem_url = publicUrl;
+      // Imagem opcional: se houver ficheiro faz upload; sem ficheiro, fica recompensa sem imagem (medalha).
+      if (file) {
+        const ext = file.name.split('.').pop();
+        const path = `${numero}/${Date.now()}.${ext}`;
+        const { error: upErr } = await sb.storage.from('recompensas').upload(path, file);
+        if (upErr) throw upErr;
+        const { data: { publicUrl } } = sb.storage.from('recompensas').getPublicUrl(path);
+        row.imagem_url = publicUrl;
+      }
     } else {
       const codigo = $('rec-voucher-codigo').value.trim();
       if (!codigo) throw new Error('Indique o código do voucher.');
