@@ -268,6 +268,7 @@ async function loadDashboard() {
 
   // Carregar agendamentos e mostrar próxima toma
   await renderProximaToma();
+   renderRecompensaBanner().catch(() => {});
 
   // Preload níveis em background para abrir mais depressa quando carregar no Iniciar Quiz
   loadNiveis().catch(() => {});
@@ -717,6 +718,7 @@ async function renderPerfilRecompensas() {
   const count = $('perfil-recompensas-count');
 
 const { data, error } = await sb.rpc('get_recompensas', { p_pin: userNumber() });
+   if (!error && data) setRecompensasVistas(data.length);
 
   if (error || !data || data.length === 0) {
     wrap.hidden = true;
