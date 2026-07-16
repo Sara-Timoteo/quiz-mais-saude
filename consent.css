@@ -216,3 +216,57 @@ body.large-text .consent-btn {
   padding: 0.85rem 1.5rem;
   min-height: 48px;
 }
+
+/* === Política de privacidade (Opção 1: texto completo no 1º acesso) === */
+.consent-policy {
+  max-height: 40vh;
+  overflow-y: auto;
+  border: 1.5px solid var(--color-border, #6BA8A7);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+  background: var(--color-bg-soft, #F4F9F9);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.consent-policy:focus {
+  outline: 2px solid var(--color-primary, #1F5E5C);
+  outline-offset: 2px;
+}
+
+.consent-policy h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: var(--color-primary, #1F5E5C);
+}
+
+.consent-policy ul {
+  margin: 0.4rem 0 0.6rem 1.2rem;
+  padding: 0;
+}
+
+.consent-policy li {
+  margin: 0.25rem 0;
+}
+
+.consent-policy a {
+  color: var(--color-primary, #1F5E5C);
+}
+
+/* Alto contraste */
+body.high-contrast .consent-policy {
+  background: #FFFFFF;
+  border: 2px solid #000000;
+  color: #000000;
+}
+
+body.high-contrast .consent-policy h3,
+body.high-contrast .consent-policy a {
+  color: #000000;
+}
+
+/* Texto grande */
+body.large-text .consent-policy {
+  font-size: 1.05rem;
+}
