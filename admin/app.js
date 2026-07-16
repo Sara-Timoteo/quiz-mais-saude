@@ -212,7 +212,7 @@ function renderRecompensasRecentes(rows) {
         ${rows.map(r => `
           <tr class="clickable" data-numero="${escapeHTML(r.numero_beneficiario)}">
             <td>${escapeHTML(r.numero_beneficiario)}</td>
-            <td><span class="badge badge--${r.tipo}">${r.tipo === 'imagem' ? '🖼️ Imagem' : '🎟️ Voucher'}</span></td>
+            <td><span class="badge badge--${r.tipo}">${r.tipo === 'voucher' ? '🎟️ Voucher' : (r.imagem_url ? '🖼️ Imagem' : '🏅 Medalha')}</span></td>
             <td>${escapeHTML(r.titulo)}</td>
             <td>${formatDateShort(r.criado_em)}</td>
           </tr>
@@ -537,7 +537,7 @@ async function loadRecompensas() {
         ${data.map(r => `
           <tr class="clickable" data-numero="${escapeHTML(r.numero_beneficiario)}">
             <td><strong>${escapeHTML(r.numero_beneficiario)}</strong></td>
-            <td><span class="badge badge--${r.tipo}">${r.tipo === 'imagem' ? '🖼️ Imagem' : '🎟️ Voucher'}</span></td>
+            <td><span class="badge badge--${r.tipo}">${r.tipo === 'voucher' ? '🎟️ Voucher' : (r.imagem_url ? '🖼️ Imagem' : '🏅 Medalha')}</span></td>
             <td>${escapeHTML(r.titulo)}</td>
             <td>${
               r.tipo === 'imagem' && r.imagem_url
