@@ -18,7 +18,7 @@
   const TEXT = {
     version: CONSENT_VERSION,
     title: 'Antes de continuar',
-    intro: 'A sua privacidade é importante. Para usar o Quiz Mais Saúde, precisamos da sua autorização para alguns pontos:',
+    intro: 'A sua privacidade é importante. Para usar a app Mais Saúde, precisamos da sua autorização para alguns pontos:',
     purposes: [
       {
         key: 'quiz',
