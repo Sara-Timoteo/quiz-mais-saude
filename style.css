@@ -2773,3 +2773,45 @@ label.toggle { cursor: pointer; display: inline-block; }
   padding: 4px 0;
   font-family: var(--font-body);
 }
+
+/* ====== Banner de recompensa nova ====== */
+.recompensa-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--mint-pale);
+  border: 1px solid var(--mint-dark);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.recompensa-banner__icon {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.recompensa-banner__text {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.recompensa-banner__btn {
+  flex-shrink: 0;
+  border: none;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 9px 18px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  min-height: 40px;
+  font-family: var(--font-body);
+}
+.recompensa-banner__btn:hover { filter: brightness(1.15); }
+.recompensa-banner__btn:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
