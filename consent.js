@@ -13,7 +13,7 @@
 (function () {
   'use strict';
 
-  const CONSENT_VERSION = 'v2-2026-07';
+  const CONSENT_VERSION = 'v3-2026-07';
 
   const TEXT = {
     version: CONSENT_VERSION,
