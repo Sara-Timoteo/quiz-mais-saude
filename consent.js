@@ -37,6 +37,39 @@
     changeMind: 'Pode mudar de ideias a qualquer momento, no seu perfil.',
     buttonAccept: 'Aceitar e continuar',
     buttonRefuse: 'Não aceito',
+    policyHtml: `
+      <h3>Privacidade e Proteção de Dados</h3>
+      <p>A presente aplicação é disponibilizada pela Associação Dignitude, com NIPC 513696628.</p>
+      <p>Ao utilizar a presente aplicação, serão utilizados dados pessoais para as seguintes finalidades:</p>
+      <ul>
+        <li><strong>Gestão de Acessos</strong>: autenticação na aplicação e controlo de permissões;</li>
+        <li><strong>Gestão de medicamentos e medições</strong>: registo e acompanhamento de informação relacionada com a toma de medicamentos e monitorização de indicadores de saúde;</li>
+        <li><strong>Gestão de desafios e recompensas</strong>: participação em desafios e/ou questionários e possível atribuição de recompensas;</li>
+        <li><strong>Gestão de notificações</strong>: comunicação de lembretes, alertas e informações relativas a medicamentos e medições e/ou desafios e recompensas.</li>
+      </ul>
+      <p>Podem ser utilizados, conforme aplicável:</p>
+      <ul>
+        <li>Dados de identificação, nomeadamente, o número de beneficiário do Programa <em>abem</em>:;</li>
+        <li>Dados sociodemográficos, nomeadamente, o ano de nascimento;</li>
+        <li>Dados de saúde, nomeadamente, registos de medicação e medições, quando fornecidos pelo utilizador;</li>
+        <li>Dados de desafios, nomeadamente, respostas a questionários e progressão;</li>
+        <li>Dados de benefícios, nomeadamente, benefícios recebidos.</li>
+      </ul>
+      <p>O tratamento de dados assenta em:</p>
+      <ul>
+        <li>Execução contratual com o utilizador;</li>
+        <li>Consentimento do utilizador, quando este introduz voluntariamente dados de saúde na aplicação.</li>
+      </ul>
+      <p>A aplicação está desenvolvida de forma a respeitar a privacidade dos utilizadores, na medida em que:</p>
+      <ul>
+        <li>Os dados de saúde ficam guardados no telemóvel do utilizador, não sendo acedidos pela Associação Dignitude nem outros terceiros; e</li>
+        <li>Os restantes dados são utilizados de forma pseudonimizada, não permitindo a identificação direta do utilizador.</li>
+      </ul>
+      <p>Neste contexto, os prestadores de serviços associados à aplicação apenas acedem a informação que não permite identificar diretamente o utilizador.</p>
+      <p>Os dados são mantidos enquanto for beneficiário do Programa <em>abem</em>: ou até solicitar o apagamento da sua conta na aplicação. Caso deixe de ser beneficiário do Programa <em>abem</em>: ou solicite o apagamento da sua conta, os dados pessoais serão eliminados e/ou anonimizados de forma irreversível.</p>
+      <p>O utilizador pode solicitar os direitos de acesso, retificação, apagamento, limitação e oposição através do e-mail: <a href="mailto:geral@dignitude.org">geral@dignitude.org</a>.</p>
+      <p>Esta política pode ser revista e alterada, a qualquer momento, de forma a refletir como os dados pessoais são utilizados na aplicação.</p>
+    `,
   };
 
   async function ensureConsent(pin, sb) {
