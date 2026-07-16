@@ -2619,6 +2619,47 @@ body.a11y-reduced-motion *::after {
 }
 .modal-overlay ol li strong { color: var(--mint-dark); }
 
+/* ====== Lightbox de recompensa ====== */
+.recompensa-modal__card {
+  max-width: 460px;
+  text-align: center;
+}
+.recompensa-modal__img {
+  width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  background: var(--mint-pale);
+  margin: 8px 0 14px;
+}
+.recompensa-modal__desc {
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.recompensa-modal__data {
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+/* Miniatura clicável na lista de recompensas */
+.recompensa-item__img-btn {
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  line-height: 0;
+}
+.recompensa-item__img-btn:hover .recompensa-item__img {
+  filter: brightness(0.92);
+}
+.recompensa-item__img-btn:focus-visible {
+  outline: 3px solid var(--mint-dark);
+  outline-offset: 2px;
+}
+
 /* Botão flutuante de leitura em voz alta */
 .tts-btn {
   position: fixed;
