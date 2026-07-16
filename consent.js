@@ -133,22 +133,6 @@
       overlay.setAttribute('aria-modal', 'true');
       overlay.setAttribute('aria-labelledby', 'consent-title');
 
-      const purposesHtml = TEXT.purposes.map((p) => `
-        <fieldset class="consent-purpose">
-          <legend>
-            <input type="checkbox"
-                   id="consent-purpose-${p.key}"
-                   ${p.required ? 'checked disabled' : 'checked'}
-                   data-purpose="${p.key}" />
-            <label for="consent-purpose-${p.key}">
-              <strong>${p.label}</strong>
-              ${p.required ? ' <span class="consent-required">(necessário)</span>' : ''}
-            </label>
-          </legend>
-          <p>${p.description}</p>
-        </fieldset>
-      `).join('');
-
       overlay.innerHTML = `
         <div class="consent-modal" tabindex="-1">
           <h2 id="consent-title">${TEXT.title}</h2>
