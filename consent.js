@@ -157,7 +157,10 @@
       overlay.innerHTML = `
         <div class="consent-modal" tabindex="-1">
           <h2 id="consent-title">${TEXT.title}</h2>
-          <p id="consent-intro">${TEXT.intro}</p>
+         <p id="consent-intro">${TEXT.intro}</p>
+          <div class="consent-policy" tabindex="0" role="region" aria-label="Política de privacidade e proteção de dados">
+            ${TEXT.policyHtml}
+          </div>
           ${purposesHtml}
           <p class="consent-reassurance">${TEXT.reassurance}</p>
           <p class="consent-change-mind">${TEXT.changeMind}</p>
