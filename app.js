@@ -15,7 +15,6 @@ const REQUIRE_LOGIN = true;
 const TABLE_NIVEIS     = 'niveis';
 const TABLE_QUIZ       = 'quiz_questoes';
 const TABLE_RESULTADOS = 'resultados';
-const FEEDBACK_MS = 1600;
 
 const SESSION_KEY  = 'mais_saude_user';
 const WELCOMED_KEY = 'mais_saude_welcomed';
