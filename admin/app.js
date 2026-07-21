@@ -1016,3 +1016,157 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // ⚠️ FIM — BLOCO TEMPORÁRIO: LIMPAR DADOS DE TESTE
 // ============================================================
+
+// ============================================================
+// CONTEÚDO — importar níveis + perguntas do Google Sheets
+// ============================================================
+
+const SHEET_CSV_NIVEIS   = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSpQiQ_MWPfMCIuG-WYuPeJrNKCTKIpBrjRi_fC5N9F9cuL88PwxLS_5nzsFmycMpeE8yAWzPpBDLVP/pub?gid=1068883762&single=true&output=csv';
+const SHEET_CSV_QUESTOES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSpQiQ_MWPfMCIuG-WYuPeJrNKCTKIpBrjRi_fC5N9F9cuL88PwxLS_5nzsFmycMpeE8yAWzPpBDLVP/pub?gid=0&single=true&output=csv';
+
+// Parser CSV robusto: aspas, vírgulas dentro de campos, aspas duplas escapadas, \r\n e BOM.
+function parseCSV(text) {
+  text = text.replace(/^\uFEFF/, '');
+  const rows = [];
+  let row = [], field = '', i = 0, inQuotes = false;
+  while (i < text.length) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i += 2; continue; }
+        inQuotes = false; i++; continue;
+      }
+      field += c; i++; continue;
+    }
+    if (c === '"') { inQuotes = true; i++; continue; }
+    if (c === ',') { row.push(field); field = ''; i++; continue; }
+    if (c === '\r') { i++; continue; }
+    if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; i++; continue; }
+    field += c; i++;
+  }
+  if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+// CSV -> array de objetos, mapeando pelas colunas do cabeçalho (a ordem não importa).
+function csvToObjects(text) {
+  const rows = parseCSV(text).filter(r => r.some(c => c.trim() !== ''));
+  if (rows.length === 0) return [];
+  const headers = rows[0].map(h => h.trim());
+  return rows.slice(1).map(r => {
+    const o = {};
+    headers.forEach((h, idx) => { o[h] = (r[idx] == null ? '' : r[idx]).trim(); });
+    return o;
+  });
+}
+
+async function fetchCSV(url) {
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return csvToObjects(await res.text());
+}
+
+let _conteudoBuffer = null; // { niveis:[], questoes:[] }
+
+async function preverImportacao() {
+  const btn = $('conteudo-preview');
+  const out = $('conteudo-resultado');
+  const conf = $('conteudo-confirmar');
+  conf.hidden = true;
+  _conteudoBuffer = null;
+  btn.disabled = true;
+  const orig = btn.textContent;
+  btn.textContent = 'A ler a folha…';
+  out.hidden = false;
+  out.innerHTML = 'A ler a Google Sheet…';
+
+  try {
+    const [niveisRaw, questoesRaw] = await Promise.all([
+      fetchCSV(SHEET_CSV_NIVEIS),
+      fetchCSV(SHEET_CSV_QUESTOES),
+    ]);
+
+    const problemas = [];
+
+    const niveis = [];
+    niveisRaw.forEach((n, idx) => {
+      const linha = idx + 2;
+      const id = parseInt(n.id, 10);
+      if (!Number.isInteger(id)) { problemas.push('Níveis, linha ' + linha + ': id inválido ("' + n.id + '").'); return; }
+      if (!n.nome) { problemas.push('Níveis, linha ' + linha + ': falta o nome.'); return; }
+      niveis.push({
+        id: id,
+        nome: n.nome,
+        ordem: n.ordem === '' ? null : parseInt(n.ordem, 10),
+        num_perguntas: n.num_perguntas === '' ? 5 : parseInt(n.num_perguntas, 10),
+      });
+    });
+
+    const questoes = [];
+    questoesRaw.forEach((q, idx) => {
+      const linha = idx + 2;
+      const id = parseInt(q.id, 10);
+      const idn = parseInt(q.id_niveis, 10);
+      const corr = parseInt(q.opcao_correta, 10);
+      if (!Number.isInteger(id)) { problemas.push('Perguntas, linha ' + linha + ': id inválido.'); return; }
+      if (!Number.isInteger(idn)) { problemas.push('Perguntas, linha ' + linha + ': id_niveis inválido.'); return; }
+      if (!q.questao) { problemas.push('Perguntas, linha ' + linha + ': falta o texto da pergunta.'); return; }
+      if (![1, 2, 3].includes(corr)) { problemas.push('Perguntas, linha ' + linha + ': opcao_correta tem de ser 1, 2 ou 3.'); return; }
+      questoes.push({
+        id: id, id_niveis: idn, questao: q.questao,
+        opcao_1: q.opcao_1, opcao_2: q.opcao_2, opcao_3: q.opcao_3,
+        opcao_correta: corr,
+      });
+    });
+
+    _conteudoBuffer = { niveis: niveis, questoes: questoes };
+
+    let html = '<p><strong>' + niveis.length + '</strong> níveis · <strong>' + questoes.length + '</strong> perguntas prontas a importar.</p>';
+    if (problemas.length) {
+      html += '<p style="color:#D8394A;font-weight:600;margin-top:10px">⚠ ' + problemas.length + ' linha(s) ignorada(s):</p>' +
+        '<ul style="margin:6px 0;padding-left:20px;color:#D8394A">' +
+        problemas.map(p => '<li>' + escapeHTML(p) + '</li>').join('') + '</ul>';
+    }
+    if (niveis.length === 0 && questoes.length === 0) {
+      html += '<p style="color:#D8394A;font-weight:600">Nada válido para importar.</p>';
+    }
+    out.innerHTML = html;
+    conf.hidden = (niveis.length === 0 && questoes.length === 0);
+  } catch (e) {
+    out.innerHTML = '<p style="color:#D8394A;font-weight:600">Não foi possível ler a folha: ' + escapeHTML(e.message) + '.<br>' +
+      'Confirma que as duas tabs estão publicadas como CSV (Ficheiro → Partilhar → Publicar na Web).</p>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
+}
+
+async function confirmarImportacao() {
+  if (!_conteudoBuffer) return;
+  const conf = $('conteudo-confirmar');
+  const out = $('conteudo-resultado');
+  conf.disabled = true;
+  const orig = conf.textContent;
+  conf.textContent = 'A importar…';
+  try {
+    const { data, error } = await sb.rpc('sincronizar_conteudo', {
+      p_niveis: _conteudoBuffer.niveis,
+      p_questoes: _conteudoBuffer.questoes,
+    });
+    if (error) throw error;
+    out.innerHTML = '<p style="color:#1F7A6E;font-weight:600">✓ Importado: ' +
+      data.niveis_sincronizados + ' níveis, ' + data.questoes_sincronizadas + ' perguntas.</p>';
+    conf.hidden = true;
+    _conteudoBuffer = null;
+  } catch (e) {
+    out.innerHTML += '<p style="color:#D8394A;font-weight:600">Erro ao importar: ' + escapeHTML(e.message) + '.</p>';
+  } finally {
+    conf.disabled = false;
+    conf.textContent = orig;
+  }
+}
+
+const _cp = $('conteudo-preview');
+if (_cp) _cp.addEventListener('click', preverImportacao);
+const _cc = $('conteudo-confirmar');
+if (_cc) _cc.addEventListener('click', confirmarImportacao);
