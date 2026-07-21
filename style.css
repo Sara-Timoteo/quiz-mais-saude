@@ -427,11 +427,30 @@ input:focus {
   font-size: 18px;
 }
 .nivel-name {
-  flex: 1;
   font-size: 16px;
   font-weight: 500;
   color: var(--ink);
 }
+.nivel-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.nivel-progress {
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+.nivel-item.is-done .nivel-number {
+  background: var(--success);
+  color: #fff;
+}
+.nivel-item.is-done .nivel-progress {
+  color: var(--success);
+  font-weight: 600;
+}
+
 .nivel-arrow {
   color: var(--mint-dark);
   font-size: 22px;
