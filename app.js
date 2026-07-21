@@ -1444,9 +1444,10 @@ async function renderCalendarioDia() {
   const isFuture = _calSelected > todayIso;
 
   if (tomas.length === 0) {
+    const quando = (_calSelected === todayIso) ? 'para hoje' : 'para este dia';
     const hint = isFuture
-      ? 'Sem tomas agendadas para este dia. Toque em + para adicionar.'
-      : 'Sem tomas registadas para este dia. Toque em + para adicionar.';
+      ? `Não há medicamentos agendados ${quando}. Toque em + para adicionar.`
+      : `Não há medicamentos registados ${quando}. Toque em + para adicionar.`;
     lista.innerHTML = `<li class="hoje-empty">${hint}</li>`;
     return;
   }
