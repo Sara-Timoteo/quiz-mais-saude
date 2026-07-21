@@ -413,6 +413,7 @@ async function startQuiz(nivel) {
   }
   $('q-total').textContent = state.questions.length;
   renderQuestion();
+}
 
 function renderQuestion() {
   const q = state.questions[state.qIndex];
