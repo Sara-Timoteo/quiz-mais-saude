@@ -389,27 +389,30 @@ async function startQuiz(nivel) {
   state.currentLevel = nivel;
   state.qIndex = 0;
   state.correctCount = 0;
+  state.answers = [];
   $('quiz-level-name').textContent = nivel.nome;
   $('question-text').textContent = 'A carregar…';
   $('options').innerHTML = '';
   $('progress-fill').style.width = '0%';
   showView('quiz');
 
-  const { data, error } = await sb.from(TABLE_QUIZ).select('*')
-    .eq('id_niveis', nivel.id)
-    .order('id', { ascending: true });
+  const { data, error } = await sb.rpc('obter_perguntas_do_nivel', {
+    p_pin: userNumber(),
+    p_nivel: nivel.id,
+  });
   if (error) {
     $('question-text').textContent = 'Erro ao carregar perguntas.';
     return;
   }
   state.questions = data || [];
   if (state.questions.length === 0) {
-    $('question-text').textContent = 'Sem perguntas neste nível.';
+    $('question-text').textContent = 'Já respondeste a todas as perguntas deste nível. 🎉';
+    $('options').innerHTML = '';
+    $('quiz-next').hidden = true;
     return;
   }
   $('q-total').textContent = state.questions.length;
   renderQuestion();
-}
 
 function renderQuestion() {
   const q = state.questions[state.qIndex];
@@ -445,8 +448,9 @@ function renderQuestion() {
 }
 
 function answer(chosen, chosenEl) {
-  const q = state.questions[state.qIndex];
+ const q = state.questions[state.qIndex];
   const correct = q.opcao_correta;
+  state.answers.push({ id_questao: q.id, escolhida: chosen });
   document.querySelectorAll('.option').forEach(o => o.classList.add('option--disabled'));
 
   if (chosen === correct) {
@@ -527,15 +531,13 @@ async function finishLevel() {
 
 async function saveResultado(row) {
   if (!row.numero_beneficiario) return;
- const { error } = await sb.rpc('guardar_resultado', {
-    p_numero: row.numero_beneficiario,
+  const { error } = await sb.rpc('registar_tentativa', {
+    p_pin: row.numero_beneficiario,
     p_id_nivel: row.id_nivel,
     p_nivel_nome: row.nivel_nome,
-    p_total: row.total_perguntas,
-    p_acertos: row.acertos,
-    p_percentagem: row.percentagem,
+    p_respostas: state.answers,
   });
-  if (error) console.warn('Erro ao guardar resultado:', error);
+  if (error) console.warn('Erro ao registar tentativa:', error);
 }
 
 $('resultado-next').addEventListener('click', () => {
