@@ -2135,10 +2135,10 @@ async function renderRelatorio(tipo) {
           </tbody>
         </table>`;
   } else if (tipo === 'glicemia') {
-    titulo = 'Glicemia';
+    titulo = 'Glicémia';
     const dados = await dadosGlicemia(periodo);
     html = dados.length === 0
-      ? '<div class="relatorio-empty">Sem medições de glicemia no período selecionado.</div>'
+      ? '<div class="relatorio-empty">Sem medições de glicémia no período selecionado.</div>'
       : `<table class="relatorio-table">
           <thead><tr>
             <th>Data</th><th>Hora</th><th>Valor</th><th>Contexto</th><th>Notas</th>
@@ -2154,7 +2154,7 @@ async function renderRelatorio(tipo) {
           </tbody>
         </table>`;
   } else if (tipo === 'medicacao') {
-    titulo = 'Adesão à medicação';
+    titulo = 'Adesão à terapêutica';
     const dados = await dadosAdesao(periodo);
     if (dados.length === 0) {
       html = '<div class="relatorio-empty">Sem tomas registadas no período. Adicione tomas no calendário primeiro.</div>';
