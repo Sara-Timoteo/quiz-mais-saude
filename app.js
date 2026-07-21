@@ -420,6 +420,7 @@ function renderQuestion() {
   const feedback = $('feedback');
   feedback.hidden = true;
   feedback.className = 'feedback';
+  $('quiz-next').hidden = true;
 
   const letters = ['A', 'B', 'C', 'D'];
   const opts = [
@@ -460,14 +461,9 @@ function answer(chosen, chosenEl) {
     showFeedback('✗  A resposta certa está realçada a verde.', 'error');
   }
 
-  setTimeout(() => {
-    state.qIndex++;
-    if (state.qIndex >= state.questions.length) {
-      finishLevel();
-    } else {
-      renderQuestion();
-    }
-  }, FEEDBACK_MS);
+const nextBtn = $('quiz-next');
+  nextBtn.hidden = false;
+  nextBtn.focus();
 }
 
 function showFeedback(text, kind) {
@@ -478,6 +474,16 @@ function showFeedback(text, kind) {
 }
 
 $('quiz-back').addEventListener('click', () => goToNiveis());
+
+$('quiz-next').addEventListener('click', () => {
+  $('quiz-next').hidden = true;
+  state.qIndex++;
+  if (state.qIndex >= state.questions.length) {
+    finishLevel();
+  } else {
+    renderQuestion();
+  }
+});
 
 
 // RESULTADO + Guardar no Supabase
