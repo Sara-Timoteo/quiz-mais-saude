@@ -377,10 +377,16 @@ function renderNiveis() {
       nome: item.dataset.nivelNome,
     });
     item.addEventListener('click', open);
-    item.addEventListener('keydown', (e) => {
+   item.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
     });
   });
+
+  const todosFeitos = state.niveis.length > 0 && state.niveis.every(n => n.esgotado);
+  const cap = document.querySelector('.niveis-intro .caption');
+  if (cap) cap.textContent = todosFeitos
+    ? '🎉 Parabéns! Já respondeste a todas as perguntas de todos os níveis.'
+    : 'Toque num nível para começar.';
 }
 
 $('niveis-back').addEventListener('click', () => goToDashboard());
