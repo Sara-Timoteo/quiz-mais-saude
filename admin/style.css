@@ -20,7 +20,7 @@
   --radius: 16px;
   --radius-sm: 10px;
   --radius-pill: 999px;
-  --font-display: 'Sansita Swashed', Georgia, serif;
+ --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-body: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
