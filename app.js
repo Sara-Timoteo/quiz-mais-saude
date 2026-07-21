@@ -403,14 +403,14 @@ async function startQuiz(nivel) {
   if (error) {
     $('question-text').textContent = 'Erro ao carregar perguntas.';
     return;
-  }
-  state.questions = data || [];
-  if (state.questions.length === 0) {
+ if (state.questions.length === 0) {
     $('question-text').textContent = 'Já respondeste a todas as perguntas deste nível. 🎉';
     $('options').innerHTML = '';
+    $('feedback').hidden = true;
     $('quiz-next').hidden = true;
     return;
   }
+     
   $('q-total').textContent = state.questions.length;
   renderQuestion();
 }
