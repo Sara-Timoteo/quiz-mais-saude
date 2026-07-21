@@ -1799,11 +1799,11 @@ async function goToMedicaoForm(modo, id, tipo) {
     const m = await Store.getMedicaoById(id);
     if (m) fillMedicaoForm(m);
     $('medicao-form-delete').hidden = false;
-    $('medicao-form-title').textContent = (tipoFinal === 'tensao') ? 'Editar tensão' : 'Editar glicemia';
+    $('medicao-form-title').textContent = (tipoFinal === 'tensao') ? 'Editar tensão arterial' : 'Editar glicémia';
   } else {
     clearMedicaoForm();
     $('medicao-form-delete').hidden = true;
-    $('medicao-form-title').textContent = (tipoFinal === 'tensao') ? 'Nova medição de tensão' : 'Nova medição de glicemia';
+    $('medicao-form-title').textContent = (tipoFinal === 'tensao') ? 'Nova medição de tensão arterial' : 'Nova medição de glicémia';
   }
 
   showView('medicao-form');
@@ -1866,7 +1866,7 @@ $('medicao-form').addEventListener('submit', async (e) => {
   } else if (tipo === 'glicemia') {
     const valor = parseInt($('medicao-form-valor').value, 10);
     if (!valor) {
-      showMedicaoFormError('Indique o valor da glicemia.');
+      showMedicaoFormError('Indique o valor da glicémia.');
       return;
     }
     row.valor = valor;
