@@ -336,15 +336,14 @@ $('dashboard-perfil-card').addEventListener('click', () => goToPerfil());
 
 async function goToNiveis() {
   showView('niveis');
-  if (state.niveis.length === 0) await loadNiveis();
+  await loadNiveis();
   renderNiveis();
 }
 
 async function loadNiveis() {
-  const { data, error } = await sb
-    .from(TABLE_NIVEIS)
-    .select('id, nome')
-    .order('id', { ascending: true });
+  const { data, error } = await sb.rpc('get_estado_percurso', {
+    p_pin: userNumber(),
+  });
   if (error) {
     $('niveis-list').innerHTML = `<li class="loading">Não foi possível carregar os níveis.<small>${escapeHTML(error.message)}</small></li>`;
     return;
@@ -358,15 +357,25 @@ function renderNiveis() {
     list.innerHTML = '<li class="loading">Ainda não há níveis disponíveis.</li>';
     return;
   }
-  list.innerHTML = state.niveis.map((n, i) => `
-    <li class="nivel-item" tabindex="0" role="button"
+  list.innerHTML = state.niveis.map((n, i) => {
+    const total = n.total_perguntas || 0;
+    const feitas = n.respondidas || 0;
+    const melhor = (n.melhor_percentagem != null) ? ` · melhor ${n.melhor_percentagem}%` : '';
+    const progresso = n.esgotado
+      ? `Concluído${melhor}`
+      : `${feitas} de ${total} respondidas${melhor}`;
+    return `
+    <li class="nivel-item${n.esgotado ? ' is-done' : ''}" tabindex="0" role="button"
         data-nivel-id="${n.id}"
         data-nivel-nome="${escapeHTML(n.nome || `Nível ${i+1}`)}">
-      <span class="nivel-number">${i + 1}</span>
-      <span class="nivel-name">${escapeHTML(n.nome || `Nível ${i+1}`)}</span>
+      <span class="nivel-number">${n.esgotado ? '✓' : i + 1}</span>
+      <span class="nivel-body">
+        <span class="nivel-name">${escapeHTML(n.nome || `Nível ${i+1}`)}</span>
+        <span class="nivel-progress">${progresso}</span>
+      </span>
       <span class="nivel-arrow" aria-hidden="true">→</span>
-    </li>
-  `).join('');
+    </li>`;
+  }).join('');
   list.querySelectorAll('.nivel-item').forEach(item => {
     const open = () => startQuiz({
       id: parseInt(item.dataset.nivelId, 10),
