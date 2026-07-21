@@ -54,6 +54,7 @@
         <button class="admin-nav__btn" data-section="utilizadores">Utilizadores</button>
         <button class="admin-nav__btn" data-section="pontuacoes">Pontuações</button>
         <button class="admin-nav__btn" data-section="recompensas">Recompensas</button>
+        <button class="admin-nav__btn" data-section="conteudo">Conteúdo</button>
       </nav>
       <div class="admin-header__user">
         <button id="admin-a11y-trigger" class="admin-a11y-trigger" aria-label="Acessibilidade" title="Acessibilidade">♿</button>
@@ -137,14 +138,27 @@
         <div id="pontuacoes-lista" class="admin-table-wrap">A carregar…</div>
       </section>
 
-      <!-- Recompensas -->
+    <!-- Recompensas -->
       <section id="section-recompensas" class="admin-section" hidden>
         <h2>Recompensas atribuídas</h2>
         <div id="recompensas-lista" class="admin-table-wrap">A carregar…</div>
       </section>
 
-    </main>
-  </section>
+      <!-- Conteúdo (níveis + perguntas) -->
+      <section id="section-conteudo" class="admin-section" hidden>
+        <h2>Conteúdo do quiz</h2>
+        <div class="admin-card">
+          <h3>Importar do Google Sheets</h3>
+          <p style="color:#5A7383;margin:6px 0 14px;line-height:1.5">
+            Os níveis e as perguntas são geridos na Google Sheet. Depois de a editares,
+            carrega em <strong>Pré-visualizar</strong> para veres o que vai ser importado e só
+            depois confirmas. A importação atualiza e acrescenta — <strong>nunca apaga</strong>.
+          </p>
+          <button id="conteudo-preview" class="btn btn--primary">Pré-visualizar importação</button>
+          <div id="conteudo-resultado" style="margin-top:14px" hidden></div>
+          <button id="conteudo-confirmar" class="btn btn--primary" style="margin-top:12px" hidden>Confirmar e importar</button>
+        </div>
+      </section>
 
   <!-- ====== MODAL: Atribuir recompensa ====== -->
   <div id="modal-recompensa" class="modal" hidden>
