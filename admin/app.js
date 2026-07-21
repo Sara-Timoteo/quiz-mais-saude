@@ -95,7 +95,7 @@ $('login-form').addEventListener('submit', async (e) => {
     console.error('Login error:', error);
     let msg = error.message || 'Erro desconhecido';
     if (msg.toLowerCase().includes('email not confirmed')) {
-      msg = 'Email não está confirmado no Supabase. Vai a Authentication → Users e activa "Auto Confirm" para este utilizador.';
+     msg = 'Email não está confirmado no Supabase. Vai a Authentication → Users e ativa "Auto Confirm" para este utilizador.';
     } else if (msg.toLowerCase().includes('invalid login credentials')) {
       msg = 'Email ou password errados. Verifica os dois (cuidado com espaços e maiúsculas).';
     }
@@ -787,7 +787,7 @@ const A11y = {
       el.checked = !!prefs[flag];
       el.addEventListener('change', () => {
         A11y.set(flag, el.checked);
-        announce(el.checked ? 'Preferência activada.' : 'Preferência desactivada.');
+        announce(el.checked ? 'Preferência ativada.' : 'Preferência desativada.');
       });
     });
   },
