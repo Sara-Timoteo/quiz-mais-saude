@@ -398,6 +398,10 @@ async function startQuiz(nivel) {
   $('question-text').textContent = 'A carregar…';
   $('options').innerHTML = '';
   $('progress-fill').style.width = '0%';
+  const _pt = document.querySelector('[data-view="quiz"] .progress-text');
+  const _pb = document.querySelector('[data-view="quiz"] .progress-bar');
+  if (_pt) _pt.hidden = false;
+  if (_pb) _pb.hidden = false;
   showView('quiz');
 
   const { data, error } = await sb.rpc('obter_perguntas_do_nivel', {
@@ -414,6 +418,8 @@ async function startQuiz(nivel) {
     $('options').innerHTML = '';
     $('feedback').hidden = true;
     $('quiz-next').hidden = true;
+    if (_pt) _pt.hidden = true;
+    if (_pb) _pb.hidden = true;
     return;
   }
   $('q-total').textContent = state.questions.length;
