@@ -11,11 +11,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 // Login real-only — consulta verificar_beneficiario no Supabase
 const REQUIRE_LOGIN = true;
-
-const TABLE_NIVEIS     = 'niveis';
-const TABLE_QUIZ       = 'quiz_questoes';
-const TABLE_RESULTADOS = 'resultados';
-
 const SESSION_KEY  = 'mais_saude_user';
 const WELCOMED_KEY = 'mais_saude_welcomed';
 
